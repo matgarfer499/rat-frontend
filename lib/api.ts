@@ -50,24 +50,27 @@ export async function getRandomWord(
   categoryIds: number[],
   language: string
 ): Promise<{ word: string; categoryId: number } | null> {
-  // Pick a random category
-  const randomCategoryId = categoryIds[Math.floor(Math.random() * categoryIds.length)];
-  
-  // Fetch words from that category
-  const words = await fetchWordsByCategory(randomCategoryId);
-  
-  if (words.length === 0) return null;
-  
-  // Pick a random word
-  const randomWord = words[Math.floor(Math.random() * words.length)];
-  
-  // Get translation in the selected language
-  const translation = randomWord.translations.find(t => t.language === language);
-  
-  if (!translation) return null;
-  
-  return {
-    word: translation.value,
-    categoryId: randomCategoryId
-  };
+  try {
+    // Create query string with multiple category_ids
+    const params = new URLSearchParams();
+    categoryIds.forEach(id => params.append('category_ids', id.toString()));
+    params.append('language', language);
+    
+    const response = await fetch(`${API_BASE_URL}/game/random-word?${params.toString()}`);
+    
+    if (!response.ok) {
+      console.error('Failed to fetch random word:', await response.text());
+      return null;
+    }
+    
+    const data = await response.json();
+    
+    return {
+      word: data.word_value,
+      categoryId: data.category_id
+    };
+  } catch (error) {
+    console.error('Error fetching random word:', error);
+    return null;
+  }
 }
