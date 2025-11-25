@@ -1,9 +1,28 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { getCurrentUser, logout, type User } from '@/lib/auth';
 
 export default function Lobby() {
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
+      setLoading(false);
+    };
+    loadUser();
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    setUser(null);
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600 p-4">
@@ -11,6 +30,41 @@ export default function Lobby() {
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-900">RAT Game</h1>
           <p className="mt-2 text-gray-600">Find the impostor among you!</p>
+          
+          {!loading && (
+            <div className="mt-4">
+              {user ? (
+                <div className="flex items-center justify-center gap-3">
+                  <span className="text-sm text-gray-700">
+                    👤 {user.username}
+                    {user.role === 'admin' && ' 👑'}
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="text-sm text-red-600 hover:text-red-700"
+                  >
+                    Salir
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-3">
+                  <Link
+                    href="/login"
+                    className="text-sm text-purple-600 hover:text-purple-700 font-semibold"
+                  >
+                    Iniciar sesión
+                  </Link>
+                  <span className="text-gray-400">|</span>
+                  <Link
+                    href="/register"
+                    className="text-sm text-blue-600 hover:text-blue-700 font-semibold"
+                  >
+                    Registrarse
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="space-y-4">
