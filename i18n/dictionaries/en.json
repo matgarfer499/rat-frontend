@@ -17,6 +17,7 @@
     "register": "Register",
     "username": "Username",
     "password": "Password",
+    "confirmPassword": "Confirm password",
     "loginButton": "Sign In",
     "registerButton": "Create Account",
     "alreadyHaveAccount": "Already have an account?",
@@ -28,7 +29,10 @@
     "loginError": "Login error",
     "registerError": "Registration error",
     "invalidCredentials": "Invalid credentials",
-    "usernameTaken": "Username already taken"
+    "usernameTaken": "Username already taken",
+    "passwordMismatch": "Passwords don't match",
+    "loggingIn": "Logging in...",
+    "registering": "Creating account..."
   },
   "lobby": {
     "title": "RAT - Lobby",
@@ -40,7 +44,13 @@
     "waitingPlayers": "Waiting for players...",
     "players": "Players",
     "ready": "Ready",
-    "notReady": "Not Ready"
+    "notReady": "Not Ready",
+    "multiplayerSoon": "Multiplayer (Coming Soon)",
+    "howToPlayTitle": "How to Play:",
+    "rule1": "All civilians get the same word",
+    "rule2": "The impostor doesn't know the word",
+    "rule3": "Take turns saying synonyms",
+    "rule4": "Find the impostor before they blend in!"
   },
   "setup": {
     "title": "Game Setup",

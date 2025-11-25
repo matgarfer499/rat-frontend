@@ -17,6 +17,7 @@
     "register": "Registrarse",
     "username": "Nombre de usuario",
     "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
     "loginButton": "Entrar",
     "registerButton": "Crear cuenta",
     "alreadyHaveAccount": "¿Ya tienes cuenta?",
@@ -28,7 +29,10 @@
     "loginError": "Error al iniciar sesión",
     "registerError": "Error al crear cuenta",
     "invalidCredentials": "Credenciales inválidas",
-    "usernameTaken": "Nombre de usuario ya existe"
+    "usernameTaken": "Nombre de usuario ya existe",
+    "passwordMismatch": "Las contraseñas no coinciden",
+    "loggingIn": "Iniciando sesión...",
+    "registering": "Creando cuenta..."
   },
   "lobby": {
     "title": "RAT - Sala de Espera",
@@ -40,7 +44,13 @@
     "waitingPlayers": "Esperando jugadores...",
     "players": "Jugadores",
     "ready": "Listo",
-    "notReady": "No listo"
+    "notReady": "No listo",
+    "multiplayerSoon": "Multijugador (Próximamente)",
+    "howToPlayTitle": "Cómo jugar:",
+    "rule1": "Todos los civiles obtienen la misma palabra",
+    "rule2": "El impostor no conoce la palabra",
+    "rule3": "Turnos para decir sinónimos",
+    "rule4": "¡Encuentra al impostor antes de que se camufle!"
   },
   "setup": {
     "title": "Configuración del Juego",
