@@ -1,12 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { fetchCategories } from '@/lib/api';
 import { CategoryWithTranslations } from '@/lib/types';
+import { useDictionary } from '@/hooks/useDictionary';
+import { LanguageSelector } from '@/components/LanguageSelector';
 
 export default function CategoriesPage() {
   const router = useRouter();
+  const params = useParams();
+  const lang = params.lang as string;
+  const dict = useDictionary();
   const [categories, setCategories] = useState<CategoryWithTranslations[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [language, setLanguage] = useState('en');
@@ -46,15 +51,17 @@ export default function CategoriesPage() {
     }
 
     sessionStorage.setItem('selectedCategories', JSON.stringify(selectedCategories));
-    router.push('/reveal');
+    router.push(`/${lang}/reveal`);
   };
+
+  if (!dict) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600">
         <div className="text-center text-white">
           <div className="mb-4 text-4xl">⏳</div>
-          <div className="text-xl font-semibold">Loading categories...</div>
+          <div className="text-xl font-semibold">{dict.categories.loading}</div>
         </div>
       </div>
     );
@@ -65,13 +72,13 @@ export default function CategoriesPage() {
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600 p-4">
         <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-2xl">
           <div className="mb-4 text-4xl">⚠️</div>
-          <h2 className="mb-2 text-2xl font-bold text-red-600">Error</h2>
+          <h2 className="mb-2 text-2xl font-bold text-red-600">{dict.common.error}</h2>
           <p className="mb-6 text-gray-600">{error}</p>
           <button
             onClick={() => router.back()}
             className="rounded-lg bg-purple-600 px-6 py-3 font-semibold text-white transition-all hover:bg-purple-700"
           >
-            Go Back
+            {dict.common.back}
           </button>
         </div>
       </div>
@@ -80,18 +87,21 @@ export default function CategoriesPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600 p-4">
-      <div className="w-full max-w-2xl space-y-6 rounded-2xl bg-white p-8 shadow-2xl">
+      <div className="w-full max-w-2xl space-y-6 rounded-2xl bg-white p-8 shadow-2xl relative">
+        <div className="absolute top-4 right-4">
+          <LanguageSelector />
+        </div>
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Select Categories</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{dict.categories.title}</h1>
           <p className="mt-2 text-gray-600">
-            Choose one or more categories for the game
+            {dict.categories.selectCategories}
           </p>
         </div>
 
         {categories.length === 0 ? (
           <div className="rounded-lg bg-yellow-50 p-6 text-center">
             <p className="text-yellow-800">
-              No categories available. Please add categories in the API first.
+              {dict.categories.noCategories}
             </p>
           </div>
         ) : (
@@ -125,8 +135,7 @@ export default function CategoriesPage() {
         {selectedCategories.length > 0 && (
           <div className="rounded-lg bg-blue-50 p-4">
             <p className="text-sm text-blue-900">
-              <strong>{selectedCategories.length}</strong> categor
-              {selectedCategories.length === 1 ? 'y' : 'ies'} selected
+              {dict.categories.selected.replace('{count}', selectedCategories.length.toString())}
             </p>
           </div>
         )}
@@ -136,7 +145,7 @@ export default function CategoriesPage() {
             onClick={() => router.back()}
             className="flex-1 rounded-lg border-2 border-gray-300 px-6 py-3 font-semibold text-gray-700 transition-all hover:bg-gray-50"
           >
-            Back
+            {dict.common.back}
           </button>
           <button
             onClick={handleStartGame}
@@ -147,7 +156,7 @@ export default function CategoriesPage() {
                 : 'bg-purple-600 hover:bg-purple-700 active:scale-95'
             }`}
           >
-            Start Game
+            {dict.categories.continue}
           </button>
         </div>
       </div>

@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Player } from '@/lib/types';
+import { useDictionary } from '@/hooks/useDictionary';
+import { LanguageSelector } from '@/components/LanguageSelector';
 
 const AVAILABLE_LANGUAGES = [
   { code: 'en', name: 'English', flag: '🇬🇧' },
@@ -12,6 +14,9 @@ const AVAILABLE_LANGUAGES = [
 
 export default function SetupPage() {
   const router = useRouter();
+  const params = useParams();
+  const lang = params.lang as string;
+  const dict = useDictionary();
   const [language, setLanguage] = useState('en');
   const [playerCount, setPlayerCount] = useState(3);
   const [playerNames, setPlayerNames] = useState<string[]>(Array(3).fill(''));
@@ -49,21 +54,26 @@ export default function SetupPage() {
     sessionStorage.setItem('gameLanguage', language);
     sessionStorage.setItem('gamePlayers', JSON.stringify(players));
 
-    router.push('/categories');
+    router.push(`/${lang}/categories`);
   };
+
+  if (!dict) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600 p-4">
-      <div className="w-full max-w-2xl space-y-6 rounded-2xl bg-white p-8 shadow-2xl">
+      <div className="w-full max-w-2xl space-y-6 rounded-2xl bg-white p-8 shadow-2xl relative">
+        <div className="absolute top-4 right-4">
+          <LanguageSelector />
+        </div>
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Game Setup</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{dict.setup.title}</h1>
           <p className="mt-2 text-gray-600">Configure your local game</p>
         </div>
 
         {/* Language Selection */}
         <div className="space-y-3">
           <label className="block text-sm font-semibold text-gray-700">
-            Select Language
+            {dict.setup.selectLanguage}
           </label>
           <div className="grid grid-cols-3 gap-3 text-stone-700">
             {AVAILABLE_LANGUAGES.map((lang) => (
@@ -86,7 +96,7 @@ export default function SetupPage() {
         {/* Player Count */}
         <div className="space-y-3">
           <label className="block text-sm font-semibold text-gray-700">
-            Number of Players (3-10)
+            {dict.setup.numberOfPlayers} (3-10)
           </label>
           <input
             type="number"
@@ -101,7 +111,7 @@ export default function SetupPage() {
         {/* Player Names */}
         <div className="space-y-3">
           <label className="block text-sm font-semibold text-gray-700">
-            Player Names
+            {dict.setup.playersNames}
           </label>
           <div className="grid gap-3 sm:grid-cols-2">
             {playerNames.map((name, index) => (
@@ -123,13 +133,13 @@ export default function SetupPage() {
             onClick={() => router.back()}
             className="flex-1 rounded-lg border-2 border-gray-300 px-6 py-3 font-semibold text-gray-700 transition-all hover:bg-gray-50"
           >
-            Back
+            {dict.common.back}
           </button>
           <button
             onClick={handleContinue}
             className="flex-1 rounded-lg bg-purple-600 px-6 py-3 font-semibold text-white transition-all hover:bg-purple-700 active:scale-95"
           >
-            Continue
+            {dict.setup.continue}
           </button>
         </div>
       </div>

@@ -1,12 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Player, PlayerRole } from '@/lib/types';
 import { getRandomWord } from '@/lib/api';
+import { useDictionary } from '@/hooks/useDictionary';
+import { LanguageSelector } from '@/components/LanguageSelector';
 
 export default function RevealPage() {
   const router = useRouter();
+  const params = useParams();
+  const lang = params.lang as string;
+  const dict = useDictionary();
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [showRole, setShowRole] = useState(false);
@@ -77,7 +82,7 @@ export default function RevealPage() {
       sessionStorage.setItem('gameWord', gameWord || '');
       sessionStorage.setItem('impostorId', impostorId || '');
       sessionStorage.setItem('gamePlayers', JSON.stringify(players));
-      router.push('/play');
+      router.push(`/${lang}/play`);
     }
   };
 
@@ -86,15 +91,20 @@ export default function RevealPage() {
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600">
         <div className="text-center text-white">
           <div className="mb-4 text-4xl">🎲</div>
-          <div className="text-xl font-semibold">Setting up the game...</div>
+          <div className="text-xl font-semibold">{dict?.common.loading || 'Loading...'}</div>
         </div>
       </div>
     );
   }
 
+  if (!dict) return null;
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600 p-4">
-      <div className="w-full max-w-md space-y-6 rounded-2xl bg-white p-8 shadow-2xl">
+      <div className="w-full max-w-md space-y-6 rounded-2xl bg-white p-8 shadow-2xl relative">
+        <div className="absolute top-4 right-4">
+          <LanguageSelector />
+        </div>
         <div className="text-center">
           <div className="mb-2 text-sm font-medium text-gray-500">
             Player {currentPlayerIndex + 1} of {players.length}
@@ -106,7 +116,7 @@ export default function RevealPage() {
           <div className="space-y-6">
             <div className="rounded-lg bg-yellow-50 p-6 text-center">
               <p className="text-yellow-800">
-                ⚠️ Make sure only <strong>{currentPlayer.name}</strong> can see the screen
+                ⚠️ {dict.reveal.instructions.replace('{name}', currentPlayer.name)}
               </p>
             </div>
 
@@ -114,7 +124,7 @@ export default function RevealPage() {
               onClick={handleRevealRole}
               className="w-full rounded-lg bg-purple-600 px-6 py-4 text-xl font-semibold text-white transition-all hover:bg-purple-700 active:scale-95"
             >
-              👁️ Reveal My Role
+              👁️ {dict.reveal.tapToReveal}
             </button>
           </div>
         ) : (
@@ -136,12 +146,12 @@ export default function RevealPage() {
                     : 'text-green-800'
                 }`}
               >
-                You are the {currentPlayer.role === 'impostor' ? 'IMPOSTOR' : 'CIVILIAN'}
+                {currentPlayer.role === 'impostor' ? dict.reveal.youAreImpostor : dict.reveal.yourWord}
               </h2>
               
               {currentPlayer.role === 'civilian' && currentPlayer.word && (
                 <div className="mt-6">
-                  <p className="mb-2 text-sm text-green-700">Your word is:</p>
+                  <p className="mb-2 text-sm text-green-700">{dict.reveal.yourWord}</p>
                   <div className="rounded-lg bg-white p-4">
                     <p className="text-3xl font-bold text-green-900">
                       {currentPlayer.word}
@@ -152,7 +162,7 @@ export default function RevealPage() {
 
               {currentPlayer.role === 'impostor' && (
                 <p className="mt-4 text-sm text-red-700">
-                  You don't know the word. Try to blend in!
+                  {dict.reveal.impostor}
                 </p>
               )}
             </div>
@@ -162,8 +172,8 @@ export default function RevealPage() {
               className="w-full rounded-lg bg-purple-600 px-6 py-4 text-xl font-semibold text-white transition-all hover:bg-purple-700 active:scale-95"
             >
               {currentPlayerIndex < players.length - 1
-                ? '➡️ Next Player'
-                : '🎮 Start Game'}
+                ? `➡️ ${dict.common.next}`
+                : `🎮 ${dict.reveal.continue}`}
             </button>
           </div>
         )}

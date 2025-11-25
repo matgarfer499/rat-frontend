@@ -1,11 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Player } from '@/lib/types';
+import { useDictionary } from '@/hooks/useDictionary';
+import { LanguageSelector } from '@/components/LanguageSelector';
 
 export default function PlayPage() {
   const router = useRouter();
+  const params = useParams();
+  const lang = params.lang as string;
+  const dict = useDictionary();
   const [players, setPlayers] = useState<Player[]>([]);
   const [gameWord, setGameWord] = useState<string>('');
   const [impostorId, setImpostorId] = useState<string>('');
@@ -33,24 +38,27 @@ export default function PlayPage() {
 
   const handlePlayAgain = () => {
     sessionStorage.clear();
-    router.push('/');
+    router.push(`/${lang}`);
   };
 
   const impostorPlayer = players.find((p) => p.id === impostorId);
 
-  if (players.length === 0) {
+  if (players.length === 0 || !dict) {
     return null;
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600 p-4">
-      <div className="w-full max-w-2xl space-y-6 rounded-2xl bg-white p-8 shadow-2xl">
+      <div className="w-full max-w-2xl space-y-6 rounded-2xl bg-white p-8 shadow-2xl relative">
+        <div className="absolute top-4 right-4">
+          <LanguageSelector />
+        </div>
         {!showReveal ? (
           <>
             <div className="text-center">
-              <h1 className="text-3xl font-bold text-gray-900">Game in Progress</h1>
+              <h1 className="text-3xl font-bold text-gray-900">{dict.play.title}</h1>
               <p className="mt-2 text-gray-600">
-                Take turns saying synonyms of your word
+                {dict.play.discussPhase}
               </p>
             </div>
 
@@ -136,26 +144,26 @@ export default function PlayPage() {
               onClick={handleRevealImpostor}
               className="w-full rounded-lg bg-red-600 px-6 py-4 text-xl font-semibold text-white transition-all hover:bg-red-700 active:scale-95"
             >
-              🔍 Reveal Impostor
+              🔍 {dict.play.findImpostor}
             </button>
           </>
         ) : (
           <>
             <div className="text-center">
-              <h1 className="text-3xl font-bold text-gray-900">Game Over!</h1>
+              <h1 className="text-3xl font-bold text-gray-900">{dict.play.gameOver}</h1>
             </div>
 
             <div className="space-y-4">
               <div className="rounded-lg bg-green-100 p-6 text-center">
                 <h2 className="mb-2 text-lg font-semibold text-green-800">
-                  The word was:
+                  {dict.reveal.yourWord}
                 </h2>
                 <div className="text-4xl font-bold text-green-900">{gameWord}</div>
               </div>
 
               <div className="rounded-lg bg-red-100 p-6 text-center">
                 <h2 className="mb-4 text-lg font-semibold text-red-800">
-                  The impostor was:
+                  {dict.reveal.impostor}:
                 </h2>
                 <div className="flex items-center justify-center gap-3">
                   <span className="text-4xl">🎭</span>
@@ -202,7 +210,7 @@ export default function PlayPage() {
                 onClick={handlePlayAgain}
                 className="flex-1 rounded-lg bg-purple-600 px-6 py-3 font-semibold text-white transition-all hover:bg-purple-700 active:scale-95"
               >
-                🎮 Play Again
+                🎮 {dict.play.playAgain}
               </button>
             </div>
           </>
