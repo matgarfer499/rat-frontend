@@ -1,6 +1,8 @@
-import { CategoryWithTranslations, WordWithTranslations } from './types';
+import type { CategoryWithTranslations, WordWithTranslations } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+export type { CategoryWithTranslations, WordWithTranslations };
 
 export async function fetchCategories(): Promise<CategoryWithTranslations[]> {
   const response = await fetch(`${API_BASE_URL}/categories/`);
