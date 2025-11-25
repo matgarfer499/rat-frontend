@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams, usePathname, useRouter } from 'next/navigation';
-import { i18n, type Locale } from '@/i18n/config';
+import { i18n, type Locale } from '@i18n/config';
 import { useState } from 'react';
 
 export function LanguageSelector() {
@@ -12,12 +12,10 @@ export function LanguageSelector() {
   const [isOpen, setIsOpen] = useState(false);
 
   const changeLanguage = (newLang: Locale) => {
-    // Replace the current locale in the path with the new one
     const segments = pathname.split('/');
     segments[1] = newLang;
     const newPath = segments.join('/');
     
-    // Set cookie and navigate
     document.cookie = `NEXT_LOCALE=${newLang}; path=/; max-age=31536000`;
     router.push(newPath);
     setIsOpen(false);

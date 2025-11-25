@@ -2,8 +2,8 @@
 
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getDictionary } from '@/i18n/get-dictionary';
-import type { Locale } from '@/i18n/config';
+import { getDictionary } from '@i18n/get-dictionary';
+import type { Locale } from '@i18n/config';
 
 export function useDictionary() {
   const params = useParams();
