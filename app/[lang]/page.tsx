@@ -3,9 +3,10 @@
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getCurrentUser, logout, type User } from '@/lib/auth';
-import { LanguageSelector } from '@/components/LanguageSelector';
-import { useDictionary } from '@/hooks/useDictionary';
+import { getCurrentUser, logout, type User } from '@lib/auth';
+import { LanguageSelector } from '@components/language-selector';
+import { Button } from '@components/button';
+import { useDictionary } from '@hooks/use-dictionary';
 
 export default function Lobby() {
   const router = useRouter();
@@ -85,28 +86,31 @@ export default function Lobby() {
         </div>
 
         <div className="space-y-4">
-          <button
+          <Button
             onClick={() => router.push(`/${lang}/setup`)}
-            className="w-full rounded-lg bg-purple-600 px-6 py-4 text-lg font-semibold text-white transition-all hover:bg-purple-700 hover:shadow-lg active:scale-95"
+            size="lg"
+            fullWidth
           >
             🎮 {dict.lobby.startGame}
-          </button>
+          </Button>
 
-          <button
+          <Button
             disabled
-            className="w-full cursor-not-allowed rounded-lg bg-gray-300 px-6 py-4 text-lg font-semibold text-gray-500"
+            variant="ghost"
+            size="lg"
+            fullWidth
           >
-            🌐 Multiplayer (Coming Soon)
-          </button>
+            🌐 {dict.lobby.multiplayerSoon || 'Multiplayer (Coming Soon)'}
+          </Button>
         </div>
 
         <div className="rounded-lg bg-blue-50 p-4">
-          <h2 className="mb-2 font-semibold text-blue-900">How to Play:</h2>
+          <h2 className="mb-2 font-semibold text-blue-900">{dict.lobby.howToPlayTitle || 'How to Play:'}</h2>
           <ul className="space-y-1 text-sm text-blue-800">
-            <li>• All civilians get the same word</li>
-            <li>• The impostor doesn't know the word</li>
-            <li>• Take turns saying synonyms</li>
-            <li>• Find the impostor before they blend in!</li>
+            <li>• {dict.lobby.rule1}</li>
+            <li>• {dict.lobby.rule2}</li>
+            <li>• {dict.lobby.rule3}</li>
+            <li>• {dict.lobby.rule4}</li>
           </ul>
         </div>
       </div>
