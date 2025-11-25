@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Player } from '@/lib/types';
-import { useDictionary } from '@/hooks/useDictionary';
-import { LanguageSelector } from '@/components/LanguageSelector';
+import { Player } from '@lib/types';
+import { useDictionary } from '@hooks/use-dictionary';
+import { LanguageSelector } from '@components/language-selector';
 
 export default function PlayPage() {
   const router = useRouter();

@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Player } from '@/lib/types';
-import { useDictionary } from '@/hooks/useDictionary';
-import { LanguageSelector } from '@/components/LanguageSelector';
+import { Player } from '@lib/types';
+import { useDictionary } from '@hooks/use-dictionary';
+import { LanguageSelector } from '@components/language-selector';
 
 const AVAILABLE_LANGUAGES = [
   { code: 'en', name: 'English', flag: '🇬🇧' },

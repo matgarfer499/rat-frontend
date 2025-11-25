@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { fetchCategories } from '@/lib/api';
-import { CategoryWithTranslations } from '@/lib/types';
-import { useDictionary } from '@/hooks/useDictionary';
-import { LanguageSelector } from '@/components/LanguageSelector';
+import { fetchCategories } from '@lib/api';
+import { CategoryWithTranslations } from '@lib/types';
+import { useDictionary } from '@hooks/use-dictionary';
+import { LanguageSelector } from '@components/language-selector';
 
 export default function CategoriesPage() {
   const router = useRouter();

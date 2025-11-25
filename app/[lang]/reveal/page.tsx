@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Player, PlayerRole } from '@/lib/types';
-import { getRandomWord } from '@/lib/api';
-import { useDictionary } from '@/hooks/useDictionary';
-import { LanguageSelector } from '@/components/LanguageSelector';
+import { Player, PlayerRole } from '@lib/types';
+import { getRandomWord } from '@lib/api';
+import { useDictionary } from '@hooks/use-dictionary';
+import { LanguageSelector } from '@components/language-selector';
 
 export default function RevealPage() {
   const router = useRouter();

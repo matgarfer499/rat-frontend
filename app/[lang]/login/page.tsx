@@ -1,38 +1,18 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { login } from '@/lib/auth';
-import { useDictionary } from '@/hooks/useDictionary';
-import { LanguageSelector } from '@/components/LanguageSelector';
+import { useDictionary } from '@hooks/use-dictionary';
+import { LanguageSelector } from '@components/language-selector';
+import { LoginForm } from '@features/auth/login-form';
+import type { Locale } from '@i18n/config';
 
 export default function LoginPage() {
-  const router = useRouter();
   const params = useParams();
-  const lang = params.lang as string;
+  const lang = params.lang as Locale;
   const dict = useDictionary();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      await login({ username, password });
-      router.push(`/${lang}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (!dict) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (!dict) return <div className="min-h-screen flex items-center justify-center">{dict?.common?.loading || 'Loading...'}</div>;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center p-4">
@@ -44,53 +24,7 @@ export default function LoginPage() {
           {dict.auth.login}
         </h1>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-              {dict.auth.username}
-            </label>
-            <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900"
-              placeholder={dict.auth.username}
-              required
-              autoComplete="username"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              {dict.auth.password}
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900"
-              placeholder={dict.auth.password}
-              required
-              autoComplete="current-password"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? dict.common.loading : dict.auth.loginButton}
-          </button>
-        </form>
+        <LoginForm lang={lang} dict={dict} />
 
         <div className="mt-6 text-center">
           <p className="text-gray-600">
