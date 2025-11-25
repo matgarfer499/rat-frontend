@@ -1,0 +1,92 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "back": "Volver",
+    "next": "Siguiente",
+    "logout": "Cerrar sesión"
+  },
+  "auth": {
+    "login": "Iniciar sesión",
+    "register": "Registrarse",
+    "username": "Nombre de usuario",
+    "password": "Contraseña",
+    "loginButton": "Entrar",
+    "registerButton": "Crear cuenta",
+    "alreadyHaveAccount": "¿Ya tienes cuenta?",
+    "dontHaveAccount": "¿No tienes cuenta?",
+    "loginHere": "Inicia sesión aquí",
+    "registerHere": "Regístrate aquí",
+    "loginSuccess": "Inicio de sesión exitoso",
+    "registerSuccess": "Cuenta creada exitosamente",
+    "loginError": "Error al iniciar sesión",
+    "registerError": "Error al crear cuenta",
+    "invalidCredentials": "Credenciales inválidas",
+    "usernameTaken": "Nombre de usuario ya existe"
+  },
+  "lobby": {
+    "title": "RAT - Sala de Espera",
+    "subtitle": "¡Encuentra al impostor!",
+    "welcome": "Bienvenido",
+    "startGame": "Iniciar Juego",
+    "createRoom": "Crear Sala",
+    "joinRoom": "Unirse a Sala",
+    "waitingPlayers": "Esperando jugadores...",
+    "players": "Jugadores",
+    "ready": "Listo",
+    "notReady": "No listo"
+  },
+  "setup": {
+    "title": "Configuración del Juego",
+    "selectLanguage": "Selecciona el idioma del juego",
+    "numberOfPlayers": "Número de jugadores",
+    "playersCount": "{count} jugadores",
+    "playersNames": "Nombres de los jugadores",
+    "continue": "Continuar"
+  },
+  "categories": {
+    "title": "Selecciona las Categorías",
+    "selectCategories": "Elige al menos una categoría para el juego",
+    "noCategories": "No hay categorías disponibles",
+    "selected": "{count} seleccionada(s)",
+    "continue": "Continuar",
+    "loading": "Cargando categorías..."
+  },
+  "reveal": {
+    "title": "¡Revela tu Palabra!",
+    "instructions": "Toca para revelar tu palabra secreta",
+    "tapToReveal": "Toca para revelar",
+    "yourWord": "Tu palabra es:",
+    "youAreImpostor": "¡Eres el Impostor!",
+    "impostor": "IMPOSTOR",
+    "rememberWord": "Recuerda esta palabra para el juego",
+    "continue": "Continuar al Juego",
+    "waiting": "Esperando a otros jugadores..."
+  },
+  "play": {
+    "title": "Juego en Curso",
+    "round": "Ronda {current} de {total}",
+    "discussPhase": "Fase de Discusión",
+    "votingPhase": "Fase de Votación",
+    "findImpostor": "¡Encuentra al impostor!",
+    "hideYourIdentity": "Oculta tu identidad",
+    "timeRemaining": "Tiempo restante: {time}s",
+    "vote": "Votar",
+    "skip": "Saltar",
+    "results": "Resultados",
+    "gameOver": "Juego Terminado",
+    "playAgain": "Jugar de Nuevo",
+    "backToLobby": "Volver al Lobby"
+  },
+  "language": {
+    "spanish": "Español",
+    "english": "English",
+    "changeLanguage": "Cambiar idioma"
+  }
+}

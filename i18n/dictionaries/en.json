@@ -1,0 +1,92 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "logout": "Logout"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "username": "Username",
+    "password": "Password",
+    "loginButton": "Sign In",
+    "registerButton": "Create Account",
+    "alreadyHaveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?",
+    "loginHere": "Login here",
+    "registerHere": "Register here",
+    "loginSuccess": "Login successful",
+    "registerSuccess": "Account created successfully",
+    "loginError": "Login error",
+    "registerError": "Registration error",
+    "invalidCredentials": "Invalid credentials",
+    "usernameTaken": "Username already taken"
+  },
+  "lobby": {
+    "title": "RAT - Lobby",
+    "subtitle": "Find the impostor among you!",
+    "welcome": "Welcome",
+    "startGame": "Start Game",
+    "createRoom": "Create Room",
+    "joinRoom": "Join Room",
+    "waitingPlayers": "Waiting for players...",
+    "players": "Players",
+    "ready": "Ready",
+    "notReady": "Not Ready"
+  },
+  "setup": {
+    "title": "Game Setup",
+    "selectLanguage": "Select game language",
+    "numberOfPlayers": "Number of players",
+    "playersCount": "{count} players",
+    "playersNames": "Player Names",
+    "continue": "Continue"
+  },
+  "categories": {
+    "title": "Select Categories",
+    "selectCategories": "Choose at least one category for the game",
+    "noCategories": "No categories available",
+    "selected": "{count} selected",
+    "continue": "Continue",
+    "loading": "Loading categories..."
+  },
+  "reveal": {
+    "title": "Reveal Your Word!",
+    "instructions": "Tap to reveal your secret word",
+    "tapToReveal": "Tap to Reveal",
+    "yourWord": "Your word is:",
+    "youAreImpostor": "You are the Impostor!",
+    "impostor": "IMPOSTOR",
+    "rememberWord": "Remember this word for the game",
+    "continue": "Continue to Game",
+    "waiting": "Waiting for other players..."
+  },
+  "play": {
+    "title": "Game in Progress",
+    "round": "Round {current} of {total}",
+    "discussPhase": "Discussion Phase",
+    "votingPhase": "Voting Phase",
+    "findImpostor": "Find the impostor!",
+    "hideYourIdentity": "Hide your identity",
+    "timeRemaining": "Time remaining: {time}s",
+    "vote": "Vote",
+    "skip": "Skip",
+    "results": "Results",
+    "gameOver": "Game Over",
+    "playAgain": "Play Again",
+    "backToLobby": "Back to Lobby"
+  },
+  "language": {
+    "spanish": "Español",
+    "english": "English",
+    "changeLanguage": "Change language"
+  }
+}
