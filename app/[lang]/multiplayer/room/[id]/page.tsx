@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@components/button';
 import { useDictionary } from '@hooks/use-dictionary';
 import { useSocket } from '@hooks/use-socket';
@@ -58,10 +58,20 @@ export default function GameRoomPage() {
     loadRoom();
   }, [roomId, lang, router]);
 
+  // Track if we've already joined the room
+  const hasJoinedRef = useRef(false);
+
   // Socket.IO event handlers
   useEffect(() => {
-    if (!isConnected || !username) {
-      console.log('⏳ Waiting for connection or username...', { isConnected, username });
+    if (!isConnected) {
+      console.log('⏳ Waiting for connection...');
+      return;
+    }
+
+    // Get initial username from localStorage
+    const storedUsername = localStorage.getItem('temp_username');
+    if (!storedUsername) {
+      console.log('⏳ No username found...');
       return;
     }
 
@@ -70,21 +80,37 @@ export default function GameRoomPage() {
     // Get stored password (if joining private room)
     const storedPassword = localStorage.getItem('room_password') || '';
 
-    // Join room via Socket.IO
-    emit('join_room', {
-      room_id: roomId,
-      username: username,
-      password: storedPassword,
-    });
+    // Only join room once per connection
+    if (!hasJoinedRef.current) {
+      emit('join_room', {
+        room_id: roomId,
+        username: storedUsername,
+        password: storedPassword,
+      });
+      hasJoinedRef.current = true;
+    }
 
     // Listen for room state updates
     const handleRoomState = (data: Room) => {
       console.log('📥 Received room_state:', data);
       setRoom(data);
-      // Find current player ID
-      const player = Object.values(data.players).find(p => p.username === username);
+      
+      // Find current player - try by stored player_id first, then by username
+      const storedPlayerId = localStorage.getItem('player_id');
+      let player: Player | undefined;
+      
+      if (storedPlayerId && data.players[storedPlayerId]) {
+        // Player found by ID (most reliable)
+        player = data.players[storedPlayerId];
+      } else {
+        // Fallback: find by username (for first join)
+        const currentUsername = localStorage.getItem('temp_username') || '';
+        player = Object.values(data.players).find(p => p.username === currentUsername);
+      }
+      
       if (player) {
         setCurrentPlayerId(player.id);
+        setUsername(player.username); // Keep username in sync with server
         localStorage.setItem('player_id', player.id);
       }
     };
@@ -136,8 +162,9 @@ export default function GameRoomPage() {
       
       // Leave room on unmount
       emit('leave_room', { room_id: roomId });
+      hasJoinedRef.current = false;
     };
-  }, [isConnected, username, roomId, emit, on, off]);
+  }, [isConnected, roomId, emit, on, off, dict]);
 
   const handleCopyRoomCode = () => {
     navigator.clipboard.writeText(roomId);
