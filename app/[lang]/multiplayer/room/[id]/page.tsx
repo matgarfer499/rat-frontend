@@ -226,6 +226,9 @@ export default function GameRoomPage() {
 
   const isHost = room && currentPlayerId === room.host_id;
   const playersList = room && room.players ? Object.values(room.players) : [];
+  const currentPlayer = playersList.find(p => p.id === currentPlayerId);
+  const readyCount = playersList.filter(p => p.is_ready).length;
+  const allPlayersReady = playersList.length > 0 && playersList.every(p => p.is_ready);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600 p-4">
@@ -287,19 +290,35 @@ export default function GameRoomPage() {
             {playersList.map((player) => (
               <div
                 key={player.id}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
+                  player.is_ready 
+                    ? 'bg-green-50 border border-green-200' 
+                    : 'bg-gray-50'
+                }`}
               >
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-900">
+                  <span className={`font-medium ${player.is_ready ? 'text-green-700' : 'text-gray-900'}`}>
                     {player.username}
                   </span>
-                  {player.is_host && <span className="text-xs">👑</span>}
+                  {player.is_host && <span className="text-xs" title="Host">👑</span>}
                   {player.id === currentPlayerId && (
-                    <span className="text-xs text-purple-600">(You)</span>
+                    <span className="text-xs bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded">You</span>
                   )}
                 </div>
-                <div className={`text-sm ${player.is_ready ? 'text-green-600' : 'text-gray-400'}`}>
-                  {player.is_ready ? '✓ Ready' : 'Not Ready'}
+                <div className={`text-sm font-medium flex items-center gap-1 ${
+                  player.is_ready ? 'text-green-600' : 'text-gray-400'
+                }`}>
+                  {player.is_ready ? (
+                    <>
+                      <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                      {dict.multiplayer?.ready || 'Ready'}
+                    </>
+                  ) : (
+                    <>
+                      <span className="inline-block w-2 h-2 bg-gray-300 rounded-full"></span>
+                      {dict.multiplayer?.notReady || 'Not Ready'}
+                    </>
+                  )}
                 </div>
               </div>
             ))}
@@ -330,6 +349,24 @@ export default function GameRoomPage() {
 
         {/* Actions */}
         <div className="space-y-3">
+          {/* Ready Button - Only in waiting phase */}
+          {room?.phase === 'waiting' && (
+            <Button
+              onClick={() => {
+                emit('toggle_ready', { room_id: roomId });
+              }}
+              variant={currentPlayer?.is_ready ? 'secondary' : 'primary'}
+              size="lg"
+              fullWidth
+            >
+              {currentPlayer?.is_ready 
+                ? `⏸️ ${dict.multiplayer?.cancelReady || 'Cancel Ready'}`
+                : `✅ ${dict.multiplayer?.ready || 'Ready!'}`
+              }
+            </Button>
+          )}
+
+          {/* Start Game Button - Only for host when all players are ready */}
           {isHost && room?.phase === 'waiting' && (
             <Button
               onClick={() => {
@@ -341,10 +378,22 @@ export default function GameRoomPage() {
               }}
               size="lg"
               fullWidth
-              disabled={playersList.length < 3}
+              disabled={!allPlayersReady || playersList.length < 3}
             >
-              🚀 Start Game
+              {!allPlayersReady 
+                ? `⏳ ${dict.multiplayer?.waitingForPlayers || 'Waiting for players...'}`
+                : playersList.length < 3
+                  ? `👥 ${dict.multiplayer?.needMorePlayers || 'Need at least 3 players'}`
+                  : `🚀 ${dict.multiplayer?.startGame || 'Start Game'}`
+              }
             </Button>
+          )}
+
+          {/* Ready status summary */}
+          {room?.phase === 'waiting' && (
+            <div className="text-center text-sm text-gray-600">
+              {readyCount}/{playersList.length} {dict.multiplayer?.playersReady || 'players ready'}
+            </div>
           )}
 
           <Button
@@ -353,7 +402,7 @@ export default function GameRoomPage() {
             size="lg"
             fullWidth
           >
-            🚪 Leave Room
+            🚪 {dict.multiplayer?.leaveRoom || 'Leave Room'}
           </Button>
         </div>
       </div>
