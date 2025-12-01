@@ -95,12 +95,12 @@ export default function Lobby() {
           </Button>
 
           <Button
-            disabled
-            variant="ghost"
+            onClick={() => router.push(`/${lang}/multiplayer`)}
+            variant="secondary"
             size="lg"
             fullWidth
           >
-            🌐 {dict.lobby.multiplayerSoon || 'Multiplayer (Coming Soon)'}
+            🌐 {dict.multiplayer?.title || 'Multiplayer'}
           </Button>
         </div>
 
