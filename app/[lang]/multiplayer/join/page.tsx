@@ -1,11 +1,11 @@
 'use client';
 
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Button } from '@components/button';
 import { useDictionary } from '@hooks/use-dictionary';
-import { getPublicRooms, joinRoom } from '@lib/rooms-api';
-import type { PublicRoom, JoinRoomRequest } from '@lib/rooms-api';
+import { getPublicRooms, joinRoom, checkRoom } from '@lib/rooms-api';
+import type { PublicRoom, JoinRoomRequest, CheckRoomResponse } from '@lib/rooms-api';
 
 interface Category {
   id: number;
@@ -19,32 +19,27 @@ interface Category {
 export default function JoinRoomPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const lang = params.lang as string;
   const dict = useDictionary();
+  
+  // URL query params
+  const codeFromUrl = searchParams.get('code');
   
   const [username, setUsername] = useState('');
   const [publicRooms, setPublicRooms] = useState<PublicRoom[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [roomCode, setRoomCode] = useState('');
+  const [roomCode, setRoomCode] = useState(codeFromUrl || '');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingRooms, setLoadingRooms] = useState(true);
+  
+  // Modal states
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [selectedRoomId, setSelectedRoomId] = useState<string>('');
-
-  useEffect(() => {
-    // Get username from localStorage
-    const storedUsername = localStorage.getItem('temp_username');
-    if (storedUsername) {
-      setUsername(storedUsername);
-    } else {
-      router.push(`/${lang}/multiplayer`);
-      return;
-    }
-
-    loadPublicRooms();
-    loadCategories();
-  }, [lang, router]);
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const [pendingRoomId, setPendingRoomId] = useState<string>('');
+  const [pendingRoomInfo, setPendingRoomInfo] = useState<CheckRoomResponse | null>(null);
+  const [passwordError, setPasswordError] = useState('');
 
   const loadCategories = async () => {
     try {
@@ -69,26 +64,59 @@ export default function JoinRoomPage() {
     }
   };
 
-  const getCategoryName = (categoryId: number): string => {
-    const category = categories.find(c => c.id === categoryId);
-    if (!category) return `${dict?.multiplayer?.category || 'Category'} ${categoryId}`;
-    const translation = category.translations?.find(t => t.language === lang);
-    return translation?.name || category.key;
-  };
-
-  const handleJoinRoom = async (roomId: string, requiresPassword: boolean = false) => {
-    if (requiresPassword && !password) {
-      setSelectedRoomId(roomId);
-      setShowPasswordModal(true);
+  const handleCheckRoom = async (roomId: string, currentUsername?: string) => {
+    const usernameToUse = currentUsername || username;
+    
+    if (!usernameToUse.trim()) {
+      setPendingRoomId(roomId);
+      setShowUsernameModal(true);
       return;
     }
 
     setLoading(true);
     try {
+      const roomInfo = await checkRoom(roomId);
+      
+      if (roomInfo.phase !== 'waiting') {
+        alert(dict?.multiplayer?.gameStarted || 'Game has already started');
+        setLoading(false);
+        return;
+      }
+      
+      if (roomInfo.player_count >= roomInfo.max_players) {
+        alert(dict?.multiplayer?.roomFull || 'Room is full');
+        setLoading(false);
+        return;
+      }
+
+      if (roomInfo.requires_password) {
+        // Private room - show password modal
+        setPendingRoomId(roomId);
+        setPendingRoomInfo(roomInfo);
+        setShowPasswordModal(true);
+        setLoading(false);
+      } else {
+        // Public room - join directly
+        await handleJoinRoom(roomId, usernameToUse);
+      }
+    } catch (error: any) {
+      alert(error.message || dict?.multiplayer?.roomNotFound || 'Room not found');
+      setLoading(false);
+    }
+  };
+
+  const handleJoinRoom = async (roomId: string, currentUsername?: string, roomPassword?: string) => {
+    const usernameToUse = currentUsername || username;
+    const passwordToUse = roomPassword || password;
+
+    setLoading(true);
+    setPasswordError('');
+    
+    try {
       const request: JoinRoomRequest = {
-        username,
+        username: usernameToUse,
         room_id: roomId,
-        password: password || undefined,
+        password: passwordToUse || undefined,
       };
 
       const response = await joinRoom(request);
@@ -96,18 +124,28 @@ export default function JoinRoomPage() {
       // Store room info and redirect to room page
       localStorage.setItem('current_room_id', response.room_id);
       localStorage.setItem('player_id', response.player_id);
+      localStorage.setItem('temp_username', usernameToUse);
+      // Store password for Socket.IO connection (only for private rooms)
+      if (passwordToUse) {
+        localStorage.setItem('room_password', passwordToUse);
+      } else {
+        localStorage.removeItem('room_password');
+      }
+      
+      // Close modals
+      setShowPasswordModal(false);
+      setShowUsernameModal(false);
+      
       router.push(`/${lang}/multiplayer/room/${response.room_id}`);
       
     } catch (error: any) {
       const errorMessage = error.message || dict?.multiplayer?.error || 'Error joining room';
-      alert(errorMessage);
       
-      // Reset password modal if shown
-      if (showPasswordModal) {
-        setPassword('');
-        setShowPasswordModal(false);
+      if (errorMessage.toLowerCase().includes('password')) {
+        setPasswordError(dict?.multiplayer?.invalidPassword || 'Invalid password');
+      } else {
+        alert(errorMessage);
       }
-    } finally {
       setLoading(false);
     }
   };
@@ -118,7 +156,67 @@ export default function JoinRoomPage() {
       return;
     }
 
-    await handleJoinRoom(roomCode.trim());
+    await handleCheckRoom(roomCode.trim());
+  };
+
+  const handleUsernameSubmit = () => {
+    if (!username.trim()) {
+      return;
+    }
+    
+    localStorage.setItem('temp_username', username);
+    setShowUsernameModal(false);
+    
+    if (pendingRoomId) {
+      handleCheckRoom(pendingRoomId, username);
+    }
+    
+    // Load rooms for browsing
+    loadPublicRooms();
+    loadCategories();
+  };
+
+  const handlePasswordSubmit = () => {
+    if (!password.trim()) {
+      setPasswordError(dict?.multiplayer?.enterPassword || 'Please enter the password');
+      return;
+    }
+    
+    handleJoinRoom(pendingRoomId, username, password);
+  };
+
+  // Check if we came from the lobby with a username
+  useEffect(() => {
+    const storedUsername = localStorage.getItem('temp_username');
+    
+    if (codeFromUrl) {
+      // Came from a link - check if we have username
+      if (storedUsername) {
+        setUsername(storedUsername);
+        // Auto-check the room from URL
+        handleCheckRoom(codeFromUrl, storedUsername);
+      } else {
+        // Need to ask for username first
+        setPendingRoomId(codeFromUrl);
+        setShowUsernameModal(true);
+      }
+    } else if (storedUsername) {
+      // Normal flow from lobby
+      setUsername(storedUsername);
+      loadPublicRooms();
+      loadCategories();
+    } else {
+      // No username, redirect to lobby
+      router.push(`/${lang}/multiplayer`);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const getCategoryName = (categoryId: number): string => {
+    const category = categories.find(c => c.id === categoryId);
+    if (!category) return `${dict?.multiplayer?.category || 'Category'} ${categoryId}`;
+    const translation = category.translations?.find(t => t.language === lang);
+    return translation?.name || category.key;
   };
 
   if (!dict) {
@@ -136,9 +234,11 @@ export default function JoinRoomPage() {
           <h1 className="text-3xl font-bold text-gray-900">
             🚪 {dict.multiplayer?.joinRoom || 'Join Room'}
           </h1>
-          <p className="mt-2 text-sm text-gray-900">
-            👤 {username}
-          </p>
+          {username && (
+            <p className="mt-2 text-sm text-gray-900">
+              👤 {username}
+            </p>
+          )}
         </div>
 
         {/* Join by Code */}
@@ -205,7 +305,7 @@ export default function JoinRoomPage() {
                     </div>
                   </div>
                   <Button
-                    onClick={() => handleJoinRoom(room.id)}
+                    onClick={() => handleCheckRoom(room.id)}
                     disabled={loading || room.player_count >= room.max_players}
                     size="sm"
                   >
@@ -231,29 +331,93 @@ export default function JoinRoomPage() {
         </Button>
       </div>
 
-      {/* Password Modal */}
+      {/* Username Modal - For link access without username */}
+      {showUsernameModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full space-y-4">
+            <h3 className="text-xl font-bold text-gray-900">
+              👤 {dict.multiplayer?.enterUsername || 'Enter your username'}
+            </h3>
+            <p className="text-sm text-gray-600">
+              {dict.multiplayer?.usernameRequired || 'You need a username to join the game'}
+            </p>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder={dict.multiplayer?.username || 'Username'}
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              autoFocus
+              maxLength={20}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleUsernameSubmit();
+                }
+              }}
+            />
+            <div className="flex gap-2">
+              <Button
+                onClick={handleUsernameSubmit}
+                disabled={!username.trim()}
+                fullWidth
+              >
+                {dict.common?.continue || 'Continue'}
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowUsernameModal(false);
+                  router.push(`/${lang}/multiplayer`);
+                }}
+                variant="ghost"
+                fullWidth
+              >
+                {dict.common?.cancel || 'Cancel'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Password Modal - For private rooms */}
       {showPasswordModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full space-y-4">
             <h3 className="text-xl font-bold text-gray-900">
               🔒 {dict.multiplayer?.passwordRequired || 'Password required'}
             </h3>
+            {pendingRoomInfo && (
+              <p className="text-sm text-gray-600">
+                {dict.multiplayer?.privateRoomMessage || 'This is a private room. Enter the password to join.'}
+              </p>
+            )}
             <input
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setPasswordError('');
+              }}
               placeholder={dict.multiplayer?.enterPassword || 'Enter password'}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className={`w-full rounded-lg border px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 ${
+                passwordError 
+                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                  : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
+              }`}
               autoFocus
               onKeyPress={(e) => {
                 if (e.key === 'Enter') {
-                  handleJoinRoom(selectedRoomId, true);
+                  handlePasswordSubmit();
                 }
               }}
             />
+            {passwordError && (
+              <p className="text-sm text-red-600">
+                ❌ {passwordError}
+              </p>
+            )}
             <div className="flex gap-2">
               <Button
-                onClick={() => handleJoinRoom(selectedRoomId, true)}
+                onClick={handlePasswordSubmit}
                 disabled={loading}
                 fullWidth
               >
@@ -263,6 +427,9 @@ export default function JoinRoomPage() {
                 onClick={() => {
                   setShowPasswordModal(false);
                   setPassword('');
+                  setPasswordError('');
+                  setPendingRoomId('');
+                  setPendingRoomInfo(null);
                 }}
                 variant="ghost"
                 fullWidth

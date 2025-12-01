@@ -21,6 +21,11 @@ export default function GameRoomPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [shareMessage, setShareMessage] = useState<string>('');
+  
+  // Edit username state
+  const [showEditUsername, setShowEditUsername] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
+  const [savingUsername, setSavingUsername] = useState(false);
 
   const { isConnected, emit, on, off } = useSocket();
 
@@ -62,11 +67,14 @@ export default function GameRoomPage() {
 
     console.log('🔄 Setting up Socket.IO listeners for room:', roomId);
 
+    // Get stored password (if joining private room)
+    const storedPassword = localStorage.getItem('room_password') || '';
+
     // Join room via Socket.IO
     emit('join_room', {
       room_id: roomId,
       username: username,
-      password: '', // Add password support if needed
+      password: storedPassword,
     });
 
     // Listen for room state updates
@@ -98,9 +106,16 @@ export default function GameRoomPage() {
       router.push(`/${lang}/multiplayer`);
     };
 
-    const handleError = (data: { message: string }) => {
+    const handleError = (data: { message?: string }) => {
       console.error('❌ Socket error:', data);
-      alert(data.message);
+      if (data?.message) {
+        alert(data.message);
+      }
+    };
+
+    const handleUsernameChanged = (data: { player_id: string; old_username: string; new_username: string }) => {
+      console.log('✏️ Username changed:', data);
+      // The room_state update will handle the UI update
     };
 
     on('room_state', handleRoomState);
@@ -108,6 +123,7 @@ export default function GameRoomPage() {
     on('player_left', handlePlayerLeft);
     on('room_closed', handleRoomClosed);
     on('error', handleError);
+    on('username_changed', handleUsernameChanged);
 
     return () => {
       console.log('🧹 Cleaning up Socket.IO listeners for room:', roomId);
@@ -116,6 +132,7 @@ export default function GameRoomPage() {
       off('player_left', handlePlayerLeft);
       off('room_closed', handleRoomClosed);
       off('error', handleError);
+      off('username_changed', handleUsernameChanged);
       
       // Leave room on unmount
       emit('leave_room', { room_id: roomId });
@@ -139,7 +156,40 @@ export default function GameRoomPage() {
     emit('leave_room', { room_id: roomId });
     localStorage.removeItem('current_room_id');
     localStorage.removeItem('player_id');
+    localStorage.removeItem('room_password');
     router.push(`/${lang}/multiplayer`);
+  };
+
+  const handleEditUsername = () => {
+    setNewUsername(username);
+    setShowEditUsername(true);
+  };
+
+  const handleSaveUsername = () => {
+    const trimmedUsername = newUsername.trim();
+    
+    if (!trimmedUsername) {
+      return;
+    }
+    
+    if (trimmedUsername === username) {
+      setShowEditUsername(false);
+      return;
+    }
+    
+    setSavingUsername(true);
+    
+    emit('update_username', {
+      room_id: roomId,
+      new_username: trimmedUsername
+    });
+    
+    // Update local state immediately for responsiveness
+    setUsername(trimmedUsername);
+    localStorage.setItem('temp_username', trimmedUsername);
+    
+    setSavingUsername(false);
+    setShowEditUsername(false);
   };
 
   if (!dict) {
@@ -192,12 +242,14 @@ export default function GameRoomPage() {
             <button
               onClick={handleCopyRoomCode}
               className="text-sm text-purple-600 hover:text-purple-700"
+              title={dict.multiplayer?.copyCode || 'Copy code'}
             >
               📋
             </button>
             <button
               onClick={handleCopyRoomLink}
               className="text-sm text-purple-600 hover:text-purple-700"
+              title={dict.multiplayer?.copyLink || 'Copy link'}
             >
               🔗
             </button>
@@ -207,6 +259,17 @@ export default function GameRoomPage() {
               ✓ {shareMessage}
             </div>
           )}
+          {/* Current user with edit option */}
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-sm text-gray-600">👤 {username}</span>
+            <button
+              onClick={handleEditUsername}
+              className="text-xs text-purple-600 hover:text-purple-700"
+              title={dict.multiplayer?.editUsername || 'Edit username'}
+            >
+              ✏️
+            </button>
+          </div>
           <div className="flex items-center justify-center gap-2 text-sm">
             <span className={`inline-block w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
             <span className="text-sm text-gray-900">
@@ -294,6 +357,53 @@ export default function GameRoomPage() {
           </Button>
         </div>
       </div>
+
+      {/* Edit Username Modal */}
+      {showEditUsername && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full space-y-4">
+            <h3 className="text-xl font-bold text-gray-900">
+              ✏️ {dict.multiplayer?.editUsername || 'Edit username'}
+            </h3>
+            <input
+              type="text"
+              value={newUsername}
+              onChange={(e) => setNewUsername(e.target.value)}
+              placeholder={dict.multiplayer?.username || 'Username'}
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              autoFocus
+              maxLength={20}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleSaveUsername();
+                }
+              }}
+            />
+            <div className="flex gap-2">
+              <Button
+                onClick={handleSaveUsername}
+                disabled={!newUsername.trim() || savingUsername}
+                fullWidth
+              >
+                {savingUsername 
+                  ? (dict.common?.saving || 'Saving...') 
+                  : (dict.common?.save || 'Save')
+                }
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowEditUsername(false);
+                  setNewUsername('');
+                }}
+                variant="ghost"
+                fullWidth
+              >
+                {dict.common?.cancel || 'Cancel'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

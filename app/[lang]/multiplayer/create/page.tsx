@@ -67,6 +67,12 @@ export default function CreateRoomPage() {
       return;
     }
 
+    // Validate: private rooms must have password
+    if (!isPublic && !password.trim()) {
+      alert(dict?.multiplayer?.passwordRequiredForPrivate || 'Private rooms require a password');
+      return;
+    }
+
     setLoading(true);
     try {
       const request: CreateRoomRequest = {
@@ -74,7 +80,8 @@ export default function CreateRoomPage() {
         category_id: selectedCategory,
         max_players: maxPlayers,
         is_public: isPublic,
-        password: password || undefined,
+        // Only send password for private rooms
+        password: !isPublic ? password : undefined,
       };
 
       const room = await createRoom(request);
@@ -165,7 +172,10 @@ export default function CreateRoomPage() {
             </label>
             <div className="flex gap-2">
               <button
-                onClick={() => setIsPublic(true)}
+                onClick={() => {
+                  setIsPublic(true);
+                  setPassword(''); // Clear password for public rooms
+                }}
                 className={`flex-1 rounded-lg px-4 py-3 font-medium transition-colors ${
                   isPublic
                     ? 'bg-purple-600 text-white'
@@ -185,22 +195,33 @@ export default function CreateRoomPage() {
                 🔒 {dict.multiplayer?.privateRoom || 'Private'}
               </button>
             </div>
+            <p className="text-xs text-gray-500 mt-2">
+              {isPublic 
+                ? (dict.multiplayer?.publicRoomDescription || 'Anyone can find and join this room')
+                : (dict.multiplayer?.privateRoomDescription || 'Only people with the code and password can join')
+              }
+            </p>
           </div>
 
-          {/* Password (optional) */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {dict.multiplayer?.password || 'Password'} ({dict.multiplayer?.optional || 'Optional'})
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••"
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              maxLength={20}
-            />
-          </div>
+          {/* Password - Required for private, hidden for public */}
+          {!isPublic && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {dict.multiplayer?.password || 'Password'} <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={dict.multiplayer?.enterPassword || 'Enter password'}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                maxLength={20}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {dict.multiplayer?.passwordHint || 'Share this password with players you want to invite'}
+              </p>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="space-y-3 pt-4">
