@@ -4,7 +4,8 @@
 
 export enum RoomPhase {
   WAITING = 'waiting',
-  HINTS = 'hints',
+  ROLE_REVEAL = 'role_reveal',
+  PLAYING = 'playing',
   VOTING = 'voting',
   RESULTS = 'results',
 }
@@ -14,15 +15,21 @@ export enum PlayerRole {
   IMPOSTOR = 'impostor',
 }
 
+export enum GameResult {
+  CIVILIANS_WIN = 'civilians_win',
+  IMPOSTOR_WINS = 'impostor_wins',
+}
+
 export interface Player {
   id: string;
   username: string;
   user_id?: number | null;
   is_ready: boolean;
   role?: PlayerRole | null;
-  hint?: string | null;
+  word?: string | null;
   vote?: string | null;
   is_host: boolean;
+  wants_to_vote: boolean;
 }
 
 export interface RoomSettings {
@@ -32,13 +39,22 @@ export interface RoomSettings {
   password?: string | null;
 }
 
+export interface GameState {
+  word: string;
+  impostor_id: string;
+  phase_start_time: number;
+  votes_submitted: number;
+  result?: GameResult | null;
+  most_voted_id?: string | null;
+}
+
 export interface Room {
   id: string;
   host_id: string;
   settings: RoomSettings;
   phase: RoomPhase;
   players: Record<string, Player>;
-  word?: string | null;
+  game_state?: GameState | null;
   round_number: number;
   created_at: number;
 }
@@ -85,4 +101,17 @@ export interface GameEvent {
 
 export interface SocketError {
   message: string;
+}
+
+// Game phase specific events
+export interface PhaseChangeEvent {
+  phase: RoomPhase;
+  phase_start_time: number;
+}
+
+export interface VoteResultEvent {
+  result: GameResult;
+  impostor_id: string;
+  most_voted_id: string;
+  votes: Record<string, string>; // player_id -> voted_for_id
 }
