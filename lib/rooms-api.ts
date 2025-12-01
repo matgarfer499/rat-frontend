@@ -43,6 +43,17 @@ export interface JoinRoomResponse {
   message: string;
 }
 
+export interface CheckRoomResponse {
+  room_id: string;
+  exists: boolean;
+  is_public: boolean;
+  requires_password: boolean;
+  player_count: number;
+  max_players: number;
+  phase: string;
+  category_id: number;
+}
+
 /**
  * Create a new game room
  */
@@ -105,6 +116,20 @@ export async function joinRoom(request: JoinRoomRequest): Promise<JoinRoomRespon
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.detail || 'Failed to join room');
+  }
+
+  return response.json();
+}
+
+/**
+ * Check if a room exists and if it requires a password
+ */
+export async function checkRoom(roomId: string): Promise<CheckRoomResponse> {
+  const response = await fetch(`${API_URL}/rooms/${roomId}/check`);
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Room not found');
   }
 
   return response.json();
