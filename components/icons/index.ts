@@ -8,3 +8,6 @@ export { UserIcon } from './UserIcon';
 export { MinusIcon } from './MinusIcon';
 export { PlusIcon } from './PlusIcon';
 export { ArrowLeftIcon } from './ArrowLeftIcon';
+export { CheckIcon } from './CheckIcon';
+export { FolderIcon } from './FolderIcon';
+export { AlertIcon } from './AlertIcon';
