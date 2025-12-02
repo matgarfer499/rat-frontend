@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { Player } from '@lib/types';
 import { useDictionary } from '@hooks/use-dictionary';
 import { LanguageSelector } from '@components/layout/LanguageSelector';
@@ -139,7 +140,13 @@ export default function SetupPage() {
   ];
 
   return (
-    <div className="flex min-h-screen flex-col items-center px-4 py-6 sm:py-8">
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      transition={{ duration: 0.3, ease: 'easeInOut' }}
+      className="flex min-h-screen flex-col items-center px-4 py-6 sm:py-8"
+    >
       {/* Header with language selector */}
       <header className="w-full max-w-lg flex justify-end mb-6">
         <LanguageSelector />
@@ -231,6 +238,6 @@ export default function SetupPage() {
 
       {/* Footer spacer */}
       <footer className="h-8" />
-    </div>
+    </motion.div>
   );
 }
