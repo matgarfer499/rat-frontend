@@ -1,46 +1,110 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Player } from '@lib/types';
 import { useDictionary } from '@hooks/use-dictionary';
-import { LanguageSelector } from '@components/language-selector';
+import { LanguageSelector } from '@components/layout/LanguageSelector';
+import { StepIndicator, NumberStepper, Input, Card } from '@components/ui';
+import { Button } from '@components/button';
+import { SettingsIcon, UserIcon, ArrowLeftIcon } from '@components/icons';
 
-const AVAILABLE_LANGUAGES = [
-  { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
-];
+const MIN_PLAYERS = 3;
+const MAX_PLAYERS = 12;
 
 export default function SetupPage() {
   const router = useRouter();
   const params = useParams();
   const lang = params.lang as string;
   const dict = useDictionary();
-  const [language, setLanguage] = useState('en');
-  const [playerCount, setPlayerCount] = useState(3);
-  const [playerNames, setPlayerNames] = useState<string[]>(Array(3).fill(''));
+  
+  const [playerCount, setPlayerCount] = useState(MIN_PLAYERS);
+  const [playerNames, setPlayerNames] = useState<string[]>(Array(MIN_PLAYERS).fill(''));
+  const [errors, setErrors] = useState<string[]>([]);
+  const [generalError, setGeneralError] = useState<string>('');
 
   const handlePlayerCountChange = (count: number) => {
     setPlayerCount(count);
-    const newNames = Array(count).fill('');
-    playerNames.forEach((name, i) => {
-      if (i < count) newNames[i] = name;
+    setPlayerNames((prevNames) => {
+      const newNames = Array(count).fill('');
+      prevNames.forEach((name, i) => {
+        if (i < count) newNames[i] = name;
+      });
+      return newNames;
     });
-    setPlayerNames(newNames);
+    // Clear errors when count changes
+    setErrors([]);
+    setGeneralError('');
   };
 
   const handlePlayerNameChange = (index: number, name: string) => {
     const newNames = [...playerNames];
     newNames[index] = name;
     setPlayerNames(newNames);
+    
+    // Clear specific error when user types
+    if (errors[index]) {
+      const newErrors = [...errors];
+      newErrors[index] = '';
+      setErrors(newErrors);
+    }
+    setGeneralError('');
+  };
+
+  // Check for duplicate names
+  const duplicateIndices = useMemo(() => {
+    const indices: number[] = [];
+    const nameMap = new Map<string, number>();
+    
+    playerNames.forEach((name, index) => {
+      const trimmedName = name.trim().toLowerCase();
+      if (trimmedName) {
+        if (nameMap.has(trimmedName)) {
+          indices.push(index);
+          const originalIndex = nameMap.get(trimmedName)!;
+          if (!indices.includes(originalIndex)) {
+            indices.push(originalIndex);
+          }
+        } else {
+          nameMap.set(trimmedName, index);
+        }
+      }
+    });
+    
+    return indices;
+  }, [playerNames]);
+
+  const validateForm = (): boolean => {
+    const newErrors: string[] = Array(playerCount).fill('');
+    let isValid = true;
+
+    // Check for empty names
+    playerNames.forEach((name, index) => {
+      if (!name.trim()) {
+        newErrors[index] = dict?.setup.validation.fillAllNames || 'Required';
+        isValid = false;
+      }
+    });
+
+    // Check for duplicates
+    if (duplicateIndices.length > 0) {
+      duplicateIndices.forEach((index) => {
+        newErrors[index] = dict?.setup.validation.duplicateNames || 'Duplicate';
+      });
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    
+    if (!isValid && duplicateIndices.length > 0) {
+      setGeneralError(dict?.setup.validation.duplicateNames || 'Player names must be unique');
+    }
+
+    return isValid;
   };
 
   const handleContinue = () => {
-    const allNamesFilled = playerNames.every(name => name.trim() !== '');
-    
-    if (!allNamesFilled) {
-      alert('Please fill in all player names');
+    if (!validateForm()) {
       return;
     }
 
@@ -50,99 +114,123 @@ export default function SetupPage() {
       hasSeenRole: false,
     }));
 
-    // Store in sessionStorage
-    sessionStorage.setItem('gameLanguage', language);
+    // Store in sessionStorage - use UI language as game language
+    sessionStorage.setItem('gameLanguage', lang);
     sessionStorage.setItem('gamePlayers', JSON.stringify(players));
 
     router.push(`/${lang}/categories`);
   };
 
-  if (!dict) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  const handleBack = () => {
+    router.push(`/${lang}`);
+  };
+
+  if (!dict) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-purple-light text-xl animate-pulse" />
+      </div>
+    );
+  }
+
+  const steps = [
+    { label: dict.setup.stepSetup, isCompleted: false, isCurrent: true },
+    { label: dict.setup.stepCategories, isCompleted: false, isCurrent: false },
+  ];
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600 p-4">
-      <div className="w-full max-w-2xl space-y-6 rounded-2xl bg-white p-8 shadow-2xl relative">
-        <div className="absolute top-4 right-4">
-          <LanguageSelector />
-        </div>
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">{dict.setup.title}</h1>
-          <p className="mt-2 text-gray-600">Configure your local game</p>
+    <div className="flex min-h-screen flex-col items-center px-4 py-6 sm:py-8">
+      {/* Header with language selector */}
+      <header className="w-full max-w-lg flex justify-end mb-6">
+        <LanguageSelector />
+      </header>
+
+      <main className="flex-1 flex flex-col w-full max-w-lg">
+        {/* Step indicator */}
+        <div className="mb-8">
+          <StepIndicator steps={steps} />
         </div>
 
-        {/* Language Selection */}
-        <div className="space-y-3">
-          <label className="block text-sm font-semibold text-gray-700">
-            {dict.setup.selectLanguage}
-          </label>
-          <div className="grid grid-cols-3 gap-3 text-stone-700">
-            {AVAILABLE_LANGUAGES.map((lang) => (
-              <button
-                key={lang.code}
-                onClick={() => setLanguage(lang.code)}
-                className={`rounded-lg border-2 p-4 transition-all ${
-                  language === lang.code
-                    ? 'border-purple-600 bg-purple-50'
-                    : 'border-gray-200 hover:border-purple-300'
-                }`}
-              >
-                <div className="text-2xl">{lang.flag}</div>
-                <div className="mt-2 text-sm font-medium">{lang.name}</div>
-              </button>
-            ))}
+        {/* Title section */}
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-12 h-12 rounded-full bg-purple-base/20 border border-purple-base/40 flex items-center justify-center">
+            <SettingsIcon size={24} className="text-purple-light" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white">{dict.setup.title}</h1>
+            <p className="text-sm text-gray-muted">{dict.setup.subtitle}</p>
           </div>
         </div>
 
-        {/* Player Count */}
-        <div className="space-y-3">
-          <label className="block text-sm font-semibold text-gray-700">
-            {dict.setup.numberOfPlayers} (3-10)
-          </label>
-          <input
-            type="number"
-            min="3"
-            max="10"
-            value={playerCount}
-            onChange={(e) => handlePlayerCountChange(parseInt(e.target.value))}
-            className="w-full text-stone-700 rounded-lg border-2 border-gray-300 px-4 py-2 focus:border-purple-600 focus:outline-none"
-          />
-        </div>
-
-        {/* Player Names */}
-        <div className="space-y-3">
-          <label className="block text-sm font-semibold text-gray-700">
-            {dict.setup.playersNames}
-          </label>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {playerNames.map((name, index) => (
-              <input
-                key={index}
-                type="text"
-                placeholder={`Player ${index + 1}`}
-                value={name}
-                onChange={(e) => handlePlayerNameChange(index, e.target.value)}
-                className="rounded-lg text-stone-700 border-2 border-gray-300 px-4 py-2 focus:border-purple-600 focus:outline-none"
-              />
-            ))}
+        {/* Form card */}
+        <Card variant="solid" className="p-6 space-y-8">
+          {/* Number of players */}
+          <div>
+            <h2 className="text-lg font-semibold text-white mb-4 text-center">
+              {dict.setup.numberOfPlayers}
+            </h2>
+            <NumberStepper
+              value={playerCount}
+              min={MIN_PLAYERS}
+              max={MAX_PLAYERS}
+              onChange={handlePlayerCountChange}
+            />
           </div>
-        </div>
 
-        {/* Buttons */}
-        <div className="flex gap-3 pt-4">
-          <button
-            onClick={() => router.back()}
-            className="flex-1 rounded-lg border-2 border-gray-300 px-6 py-3 font-semibold text-gray-700 transition-all hover:bg-gray-50"
+          {/* Divider */}
+          <div className="h-px bg-purple-base/30" />
+
+          {/* Player names */}
+          <div>
+            <h2 className="text-lg font-semibold text-white mb-4">
+              {dict.setup.playersNames}
+            </h2>
+            
+            {/* General error message */}
+            {generalError && (
+              <p className="text-sm text-red-400 mb-4 text-center">{generalError}</p>
+            )}
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {playerNames.map((name, index) => (
+                <Input
+                  key={index}
+                  type="text"
+                  placeholder={dict.setup.playerPlaceholder.replace('{number}', String(index + 1))}
+                  value={name}
+                  onChange={(e) => handlePlayerNameChange(index, e.target.value)}
+                  icon={<UserIcon size={18} />}
+                  error={errors[index]}
+                />
+              ))}
+            </div>
+          </div>
+        </Card>
+
+        {/* Action buttons */}
+        <div className="flex gap-4 mt-8">
+          <Button
+            variant="ghost"
+            size="lg"
+            onClick={handleBack}
+            className="flex-1 flex items-center justify-center gap-2"
           >
+            <ArrowLeftIcon size={20} />
             {dict.common.back}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
+            size="lg"
             onClick={handleContinue}
-            className="flex-1 rounded-lg bg-purple-600 px-6 py-3 font-semibold text-white transition-all hover:bg-purple-700 active:scale-95"
+            className="flex-1"
           >
             {dict.setup.continue}
-          </button>
+          </Button>
         </div>
-      </div>
+      </main>
+
+      {/* Footer spacer */}
+      <footer className="h-8" />
     </div>
   );
 }
