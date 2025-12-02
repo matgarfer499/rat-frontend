@@ -1,119 +1,80 @@
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { getCurrentUser, logout, type User } from '@lib/auth';
-import { LanguageSelector } from '@components/language-selector';
-import { Button } from '@components/button';
+import { LanguageSelector } from '@components/layout/LanguageSelector';
+import { GameModeCard } from '@components/ui/GameModeCard';
+import { DeviceIcon, UsersIcon, RatIcon } from '@components/icons';
 import { useDictionary } from '@hooks/use-dictionary';
 
-export default function Lobby() {
+export default function Home() {
   const router = useRouter();
   const params = useParams();
   const lang = params.lang as string;
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const dict = useDictionary();
-
-  useEffect(() => {
-    const loadUser = async () => {
-      const currentUser = await getCurrentUser();
-      setUser(currentUser);
-      setLoading(false);
-    };
-    loadUser();
-  }, []);
-
-  const handleLogout = () => {
-    logout();
-    setUser(null);
-  };
 
   if (!dict) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600">
-        <div className="text-white text-xl">Loading...</div>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-purple-light text-xl animate-pulse">
+          {/* Loading state without text to avoid flash */}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600 p-4">
-      <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-2xl relative">
-        <div className="absolute top-4 right-4">
-          <LanguageSelector />
+    <div className="flex min-h-screen flex-col items-center px-4 py-6 sm:py-8">
+      {/* Header with language selector */}
+      <header className="w-full max-w-md flex justify-end mb-8">
+        <LanguageSelector />
+      </header>
+
+      {/* Title section */}
+      <main className="flex-1 flex flex-col items-center justify-center w-full max-w-md">
+        {/* Rat logo/icon */}
+        <div className="mb-4">
+          <div className="w-20 h-20 rounded-full bg-purple-base/20 border-2 border-purple-base/40 flex items-center justify-center shadow-[0_0_30px_rgba(168,85,247,0.3)]">
+            <RatIcon size={48} className="text-purple-light" />
+          </div>
         </div>
 
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900">{dict.lobby.title}</h1>
-          <p className="mt-2 text-gray-600">{dict.lobby.subtitle}</p>
-          
-          {!loading && (
-            <div className="mt-4">
-              {user ? (
-                <div className="flex items-center justify-center gap-3">
-                  <span className="text-sm text-gray-700">
-                    👤 {user.username}
-                    {user.role === 'admin' && ' 👑'}
-                  </span>
-                  <button
-                    onClick={handleLogout}
-                    className="text-sm text-red-600 hover:text-red-700"
-                  >
-                    {dict.common.logout}
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center gap-3">
-                  <Link
-                    href={`/${lang}/login`}
-                    className="text-sm text-purple-600 hover:text-purple-700 font-semibold"
-                  >
-                    {dict.auth.login}
-                  </Link>
-                  <span className="text-gray-400">|</span>
-                  <Link
-                    href={`/${lang}/register`}
-                    className="text-sm text-blue-600 hover:text-blue-700 font-semibold"
-                  >
-                    {dict.auth.register}
-                  </Link>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        {/* R.A.T. Title */}
+        <h1 className="text-5xl sm:text-6xl font-black text-white tracking-wider text-glow-purple mb-2">
+          R<span className="text-purple-light">.</span>A<span className="text-purple-light">.</span>T<span className="text-purple-light">.</span>
+        </h1>
 
-        <div className="space-y-4">
-          <Button
+        {/* Subtitle */}
+        <p className="text-gray-muted text-lg sm:text-xl font-medium tracking-wide mb-2">
+          {dict.lobby.subtitle}
+        </p>
+
+        {/* Tagline */}
+        <p className="text-cyan-accent text-sm sm:text-base mb-12 text-glow-cyan">
+          {dict.lobby.tagline}
+        </p>
+
+        {/* Game mode cards */}
+        <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          <GameModeCard
+            title={dict.lobby.localGame}
+            description={dict.lobby.localGameDesc}
+            icon={<DeviceIcon size={32} />}
             onClick={() => router.push(`/${lang}/setup`)}
-            size="lg"
-            fullWidth
-          >
-            🎮 {dict.lobby.startGame}
-          </Button>
+            accentColor="purple"
+          />
 
-          <Button
+          <GameModeCard
+            title={dict.lobby.multiplayerGame}
+            description={dict.lobby.multiplayerGameDesc}
+            icon={<UsersIcon size={32} />}
             onClick={() => router.push(`/${lang}/multiplayer`)}
-            variant="secondary"
-            size="lg"
-            fullWidth
-          >
-            🌐 {dict.multiplayer?.title || 'Multiplayer'}
-          </Button>
+            accentColor="cyan"
+          />
         </div>
+      </main>
 
-        <div className="rounded-lg bg-blue-50 p-4">
-          <h2 className="mb-2 font-semibold text-blue-900">{dict.lobby.howToPlayTitle || 'How to Play:'}</h2>
-          <ul className="space-y-1 text-sm text-blue-800">
-            <li>• {dict.lobby.rule1}</li>
-            <li>• {dict.lobby.rule2}</li>
-            <li>• {dict.lobby.rule3}</li>
-            <li>• {dict.lobby.rule4}</li>
-          </ul>
-        </div>
-      </div>
+      {/* Footer spacer */}
+      <footer className="h-8 sm:h-12" />
     </div>
   );
 }
