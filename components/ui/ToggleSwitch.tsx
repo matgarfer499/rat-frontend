@@ -25,15 +25,15 @@ export function ToggleSwitch({ checked, onChange, label, description }: ToggleSw
       
       <div
         className={`
-          relative w-12 h-7 rounded-full transition-colors duration-200
+          relative w-12 h-7 rounded-full transition-colors duration-200 flex items-center
           ${checked ? 'bg-purple-base' : 'bg-purple-darker border border-purple-base/30'}
         `}
       >
         <motion.div
-          animate={{ x: checked ? 22 : 2 }}
+          animate={{ x: checked ? 24 : 4 }}
           transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           className={`
-            absolute top-1 w-5 h-5 rounded-full
+            w-5 h-5 rounded-full
             ${checked ? 'bg-white' : 'bg-gray-muted'}
           `}
         />
