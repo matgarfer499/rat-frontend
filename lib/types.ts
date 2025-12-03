@@ -33,7 +33,7 @@ export interface WordWithTranslations extends Word {
 }
 
 // Game Types
-export type PlayerRole = 'civilian' | 'impostor';
+export type PlayerRole = 'civilian' | 'impostor' | 'detective' | 'joker';
 
 export interface Player {
   id: string;
@@ -41,12 +41,19 @@ export interface Player {
   role?: PlayerRole;
   word?: string;
   hasSeenRole: boolean;
+  detectiveUsed?: boolean; // For detective role tracking
+}
+
+export interface GameRoles {
+  detectiveEnabled: boolean;
+  jokerEnabled: boolean;
 }
 
 export interface GameConfig {
   language: string;
   players: Player[];
   selectedCategories: number[];
+  roles?: GameRoles;
 }
 
 export interface GameState {
