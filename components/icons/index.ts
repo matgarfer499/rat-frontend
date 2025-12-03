@@ -21,3 +21,4 @@ export { StopIcon } from './StopIcon';
 export { RefreshIcon } from './RefreshIcon';
 export { MaskIcon } from './MaskIcon';
 export { HomeIcon } from './HomeIcon';
+export { ClockIcon } from './ClockIcon';
