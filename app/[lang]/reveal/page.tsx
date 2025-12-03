@@ -22,6 +22,8 @@ export default function RevealPage() {
   const [hasRevealed, setHasRevealed] = useState(false);
   const [gameWord, setGameWord] = useState<string | null>(null);
   const [impostorId, setImpostorId] = useState<string | null>(null);
+  const [detectiveId, setDetectiveId] = useState<string | null>(null);
+  const [jokerId, setJokerId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,6 +31,8 @@ export default function RevealPage() {
       const gameLang = sessionStorage.getItem('gameLanguage') || 'en';
       const playersData = sessionStorage.getItem('gamePlayers');
       const categoriesData = sessionStorage.getItem('selectedCategories');
+      const detectiveEnabled = sessionStorage.getItem('detectiveEnabled') === 'true';
+      const jokerEnabled = sessionStorage.getItem('jokerEnabled') === 'true';
 
       if (!playersData || !categoriesData) {
         router.push(`/${lang}/setup`);
@@ -47,15 +51,59 @@ export default function RevealPage() {
 
       setGameWord(wordData.word);
 
-      const randomImpostorIndex = Math.floor(Math.random() * parsedPlayers.length);
-      const impostorPlayerId = parsedPlayers[randomImpostorIndex].id;
+      // Create array of available player indices for role assignment
+      const availableIndices = parsedPlayers.map((_, i) => i);
+      
+      // Shuffle helper function
+      const pickRandomIndex = () => {
+        const randomPos = Math.floor(Math.random() * availableIndices.length);
+        return availableIndices.splice(randomPos, 1)[0];
+      };
+
+      // Assign impostor (always)
+      const impostorIndex = pickRandomIndex();
+      const impostorPlayerId = parsedPlayers[impostorIndex].id;
       setImpostorId(impostorPlayerId);
 
-      const playersWithRoles = parsedPlayers.map((player) => ({
-        ...player,
-        role: (player.id === impostorPlayerId ? 'impostor' : 'civilian') as PlayerRole,
-        word: player.id === impostorPlayerId ? undefined : wordData.word,
-      }));
+      // Assign detective if enabled and enough players
+      let detectivePlayerId: string | null = null;
+      if (detectiveEnabled && availableIndices.length > 0) {
+        const detectiveIndex = pickRandomIndex();
+        detectivePlayerId = parsedPlayers[detectiveIndex].id;
+        setDetectiveId(detectivePlayerId);
+      }
+
+      // Assign joker if enabled and enough players
+      let jokerPlayerId: string | null = null;
+      if (jokerEnabled && availableIndices.length > 0) {
+        const jokerIndex = pickRandomIndex();
+        jokerPlayerId = parsedPlayers[jokerIndex].id;
+        setJokerId(jokerPlayerId);
+      }
+
+      // Assign roles to all players
+      const playersWithRoles = parsedPlayers.map((player) => {
+        let role: PlayerRole = 'civilian';
+        let word: string | undefined = wordData.word;
+
+        if (player.id === impostorPlayerId) {
+          role = 'impostor';
+          word = undefined; // Impostor doesn't know the word
+        } else if (player.id === detectivePlayerId) {
+          role = 'detective';
+          // Detective knows the word
+        } else if (player.id === jokerPlayerId) {
+          role = 'joker';
+          // Joker knows the word
+        }
+
+        return {
+          ...player,
+          role,
+          word,
+          detectiveUsed: false,
+        };
+      });
 
       setPlayers(playersWithRoles);
       setLoading(false);
@@ -79,6 +127,8 @@ export default function RevealPage() {
     } else {
       sessionStorage.setItem('gameWord', gameWord || '');
       sessionStorage.setItem('impostorId', impostorId || '');
+      sessionStorage.setItem('detectiveId', detectiveId || '');
+      sessionStorage.setItem('jokerId', jokerId || '');
       sessionStorage.setItem('gamePlayers', JSON.stringify(players));
       router.push(`/${lang}/play`);
     }
@@ -126,11 +176,17 @@ export default function RevealPage() {
             revealAgainText={dict.reveal.slideToRevealAgain}
           >
             <RoleDisplay
-              isImpostor={currentPlayer.role === 'impostor'}
+              role={currentPlayer.role || 'civilian'}
               word={currentPlayer.word}
-              impostorText={dict.reveal.youAreImpostor}
-              civilianText={dict.reveal.youAreCivilian}
+              labels={{
+                impostor: dict.reveal.youAreImpostor,
+                civilian: dict.reveal.youAreCivilian,
+                detective: dict.reveal.youAreDetective,
+                joker: dict.reveal.youAreJoker,
+              }}
               wordLabel={dict.reveal.yourWord}
+              detectiveHint={dict.reveal.detectiveHint}
+              jokerHint={dict.reveal.jokerHint}
             />
           </RevealCard>
         </div>

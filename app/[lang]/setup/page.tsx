@@ -8,7 +8,7 @@ import { useDictionary } from '@hooks/use-dictionary';
 import { LanguageSelector } from '@components/layout/LanguageSelector';
 import { StepIndicator, NumberStepper, Input, Card, TimeSelector, ToggleSwitch } from '@components/ui';
 import { Button } from '@components/button';
-import { SettingsIcon, UserIcon, ArrowLeftIcon, ClockIcon } from '@components/icons';
+import { SettingsIcon, UserIcon, ArrowLeftIcon, ClockIcon, DetectiveIcon, JokerIcon, MaskIcon } from '@components/icons';
 
 const MIN_PLAYERS = 3;
 const MAX_PLAYERS = 12;
@@ -39,6 +39,10 @@ export default function SetupPage() {
   const [votingTime, setVotingTime] = useState(DEFAULT_VOTING_TIME);
   const [discussionTimerEnabled, setDiscussionTimerEnabled] = useState(false);
   const [discussionTime, setDiscussionTime] = useState(DEFAULT_DISCUSSION_TIME);
+  
+  // Special roles state
+  const [detectiveEnabled, setDetectiveEnabled] = useState(false);
+  const [jokerEnabled, setJokerEnabled] = useState(false);
 
   const handlePlayerCountChange = (count: number) => {
     setPlayerCount(count);
@@ -139,6 +143,10 @@ export default function SetupPage() {
     sessionStorage.setItem('votingTime', String(votingTime));
     sessionStorage.setItem('discussionTimerEnabled', String(discussionTimerEnabled));
     sessionStorage.setItem('discussionTime', String(discussionTime));
+    
+    // Store special roles
+    sessionStorage.setItem('detectiveEnabled', String(detectiveEnabled));
+    sessionStorage.setItem('jokerEnabled', String(jokerEnabled));
 
     router.push(`/${lang}/categories`);
   };
@@ -288,6 +296,61 @@ export default function SetupPage() {
                     />
                   </div>
                 </motion.div>
+              </div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="h-px bg-purple-base/30" />
+
+          {/* Special Roles */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <MaskIcon size={20} className="text-purple-light" />
+              <h2 className="text-lg font-semibold text-white">
+                {dict.setup.specialRoles}
+              </h2>
+            </div>
+
+            <div className="space-y-4">
+              {/* Detective role */}
+              <div className="p-4 rounded-xl bg-purple-darker/50 border border-purple-base/20">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-500/20 border border-blue-500/40 
+                                  flex items-center justify-center flex-shrink-0 mt-1">
+                    <DetectiveIcon size={20} className="text-blue-400" />
+                  </div>
+                  <div className="flex-1">
+                    <ToggleSwitch
+                      checked={detectiveEnabled}
+                      onChange={setDetectiveEnabled}
+                      label={dict.setup.detectiveRole}
+                    />
+                    <p className="text-gray-muted text-xs mt-1">
+                      {dict.setup.detectiveDesc}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Joker role */}
+              <div className="p-4 rounded-xl bg-purple-darker/50 border border-purple-base/20">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-yellow-500/20 border border-yellow-500/40 
+                                  flex items-center justify-center flex-shrink-0 mt-1">
+                    <JokerIcon size={20} className="text-yellow-400" />
+                  </div>
+                  <div className="flex-1">
+                    <ToggleSwitch
+                      checked={jokerEnabled}
+                      onChange={setJokerEnabled}
+                      label={dict.setup.jokerRole}
+                    />
+                    <p className="text-gray-muted text-xs mt-1">
+                      {dict.setup.jokerDesc}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

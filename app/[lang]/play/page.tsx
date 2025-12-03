@@ -9,7 +9,7 @@ import { LanguageSelector } from '@components/layout/LanguageSelector';
 import { CountdownTimer } from '@components/game';
 import { Button } from '@components/button';
 import { Card } from '@components/ui';
-import { PlayIcon, StopIcon, RefreshIcon, MaskIcon, HomeIcon, UserIcon } from '@components/icons';
+import { PlayIcon, StopIcon, RefreshIcon, MaskIcon, HomeIcon, UserIcon, DetectiveIcon, JokerIcon } from '@components/icons';
 
 type GamePhase = 'discussion' | 'voting' | 'reveal';
 
@@ -21,6 +21,8 @@ export default function PlayPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [gameWord, setGameWord] = useState<string>('');
   const [impostorId, setImpostorId] = useState<string>('');
+  const [detectiveId, setDetectiveId] = useState<string | null>(null);
+  const [jokerId, setJokerId] = useState<string | null>(null);
   const [phase, setPhase] = useState<GamePhase>('discussion');
   const [startingPlayerIndex, setStartingPlayerIndex] = useState<number>(0);
   
@@ -45,6 +47,12 @@ export default function PlayPage() {
     setImpostorId(impostor);
     // Select random starting player
     setStartingPlayerIndex(Math.floor(Math.random() * parsedPlayers.length));
+    
+    // Load special roles
+    const storedDetectiveId = sessionStorage.getItem('detectiveId');
+    const storedJokerId = sessionStorage.getItem('jokerId');
+    if (storedDetectiveId) setDetectiveId(storedDetectiveId);
+    if (storedJokerId) setJokerId(storedJokerId);
     
     // Load game rules
     const storedVotingTime = sessionStorage.getItem('votingTime');
@@ -229,31 +237,49 @@ export default function PlayPage() {
               {/* All players list */}
               <Card variant="glass" className="w-full p-4">
                 <div className="space-y-2">
-                  {players.map((player) => (
-                    <div
-                      key={player.id}
-                      className={`flex items-center justify-between p-3 rounded-lg ${
-                        player.id === impostorId
-                          ? 'bg-red-500/10 border border-red-500/30'
-                          : 'bg-emerald-500/10 border border-emerald-500/30'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <UserIcon
-                          size={18}
-                          className={player.id === impostorId ? 'text-red-400' : 'text-emerald-400'}
-                        />
-                        <span className="text-white font-medium">{player.name}</span>
-                      </div>
-                      <span
-                        className={`text-sm font-semibold ${
-                          player.id === impostorId ? 'text-red-400' : 'text-emerald-400'
-                        }`}
+                  {players.map((player) => {
+                    const isImpostor = player.id === impostorId;
+                    const isDetective = player.id === detectiveId;
+                    const isJoker = player.id === jokerId;
+                    
+                    // Determine role styling
+                    let bgClass = 'bg-emerald-500/10 border-emerald-500/30';
+                    let textClass = 'text-emerald-400';
+                    let roleLabel = dict.play.civilian;
+                    let RoleIcon = UserIcon;
+                    
+                    if (isImpostor) {
+                      bgClass = 'bg-red-500/10 border-red-500/30';
+                      textClass = 'text-red-400';
+                      roleLabel = dict.play.impostor;
+                      RoleIcon = MaskIcon;
+                    } else if (isDetective) {
+                      bgClass = 'bg-blue-500/10 border-blue-500/30';
+                      textClass = 'text-blue-400';
+                      roleLabel = dict.play.detective || 'Detective';
+                      RoleIcon = DetectiveIcon;
+                    } else if (isJoker) {
+                      bgClass = 'bg-yellow-500/10 border-yellow-500/30';
+                      textClass = 'text-yellow-400';
+                      roleLabel = dict.play.joker || 'Joker';
+                      RoleIcon = JokerIcon;
+                    }
+                    
+                    return (
+                      <div
+                        key={player.id}
+                        className={`flex items-center justify-between p-3 rounded-lg border ${bgClass}`}
                       >
-                        {player.id === impostorId ? dict.play.impostor : dict.play.civilian}
-                      </span>
-                    </div>
-                  ))}
+                        <div className="flex items-center gap-2">
+                          <RoleIcon size={18} className={textClass} />
+                          <span className="text-white font-medium">{player.name}</span>
+                        </div>
+                        <span className={`text-sm font-semibold ${textClass}`}>
+                          {roleLabel}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </Card>
 
