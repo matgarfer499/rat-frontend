@@ -1,10 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Player } from '@lib/types';
 import { useDictionary } from '@hooks/use-dictionary';
-import { LanguageSelector } from '@components/language-selector';
+import { LanguageSelector } from '@components/layout/LanguageSelector';
+import { CountdownTimer } from '@components/game';
+import { Button } from '@components/button';
+import { Card } from '@components/ui';
+import { PlayIcon, StopIcon, RefreshIcon, MaskIcon, HomeIcon, UserIcon } from '@components/icons';
+
+type GamePhase = 'discussion' | 'voting' | 'reveal';
+
+const VOTING_TIME = 60; // 1 minute for voting
 
 export default function PlayPage() {
   const router = useRouter();
@@ -14,8 +23,8 @@ export default function PlayPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [gameWord, setGameWord] = useState<string>('');
   const [impostorId, setImpostorId] = useState<string>('');
-  const [showReveal, setShowReveal] = useState(false);
-  const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
+  const [phase, setPhase] = useState<GamePhase>('discussion');
+  const [startingPlayerIndex, setStartingPlayerIndex] = useState<number>(0);
 
   useEffect(() => {
     const playersData = sessionStorage.getItem('gamePlayers');
@@ -23,20 +32,37 @@ export default function PlayPage() {
     const impostor = sessionStorage.getItem('impostorId');
 
     if (!playersData || !word || !impostor) {
-      router.push('/setup');
+      router.push(`/${lang}/setup`);
       return;
     }
 
-    setPlayers(JSON.parse(playersData));
+    const parsedPlayers = JSON.parse(playersData);
+    setPlayers(parsedPlayers);
     setGameWord(word);
     setImpostorId(impostor);
-  }, [router]);
+    // Select random starting player
+    setStartingPlayerIndex(Math.floor(Math.random() * parsedPlayers.length));
+  }, [router, lang]);
 
-  const handleRevealImpostor = () => {
-    setShowReveal(true);
+  const handleStartVoting = () => {
+    setPhase('voting');
   };
 
+  const handleEndVoting = useCallback(() => {
+    setPhase('reveal');
+  }, []);
+
   const handlePlayAgain = () => {
+    // Keep players but clear game state, go to categories
+    const currentPlayers = players.map(({ id, name }) => ({ id, name }));
+    sessionStorage.setItem('gamePlayers', JSON.stringify(currentPlayers));
+    sessionStorage.removeItem('gameWord');
+    sessionStorage.removeItem('impostorId');
+    sessionStorage.removeItem('selectedCategories');
+    router.push(`/${lang}/categories`);
+  };
+
+  const handleBackToLobby = () => {
     sessionStorage.clear();
     router.push(`/${lang}`);
   };
@@ -44,178 +70,201 @@ export default function PlayPage() {
   const impostorPlayer = players.find((p) => p.id === impostorId);
 
   if (players.length === 0 || !dict) {
-    return null;
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-purple-light text-xl animate-pulse" />
+      </div>
+    );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600 p-4">
-      <div className="w-full max-w-2xl space-y-6 rounded-2xl bg-white p-8 shadow-2xl relative">
-        <div className="absolute top-4 right-4">
-          <LanguageSelector />
-        </div>
-        {!showReveal ? (
-          <>
-            <div className="text-center">
-              <h1 className="text-3xl font-bold text-gray-900">{dict.play.title}</h1>
-              <p className="mt-2 text-gray-600">
-                {dict.play.discussPhase}
-              </p>
-            </div>
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      transition={{ duration: 0.3, ease: 'easeInOut' }}
+      className="flex min-h-screen flex-col items-center px-4 py-6 sm:py-8"
+    >
+      {/* Header */}
+      <header className="w-full max-w-md flex justify-end mb-6">
+        <LanguageSelector />
+      </header>
 
-            <div className="rounded-lg bg-blue-50 p-6">
-              <h2 className="mb-4 text-center text-xl font-bold text-blue-900">
-                How to Play:
-              </h2>
-              <ol className="space-y-2 text-blue-800">
-                <li className="flex items-start">
-                  <span className="mr-2 font-bold">1.</span>
-                  <span>
-                    Each player takes turns saying a synonym or description of their word
-                  </span>
-                </li>
-                <li className="flex items-start">
-                  <span className="mr-2 font-bold">2.</span>
-                  <span>
-                    The impostor must try to blend in without knowing the word
-                  </span>
-                </li>
-                <li className="flex items-start">
-                  <span className="mr-2 font-bold">3.</span>
-                  <span>
-                    After discussion, vote on who you think is the impostor
-                  </span>
-                </li>
-                <li className="flex items-start">
-                  <span className="mr-2 font-bold">4.</span>
-                  <span>
-                    Click "Reveal Impostor" to see if you guessed correctly!
-                  </span>
-                </li>
-              </ol>
-            </div>
-
-            <div className="rounded-lg border-2 border-purple-200 p-6">
-              <h3 className="mb-4 text-center font-semibold text-gray-700">
-                Players ({players.length})
-              </h3>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {players.map((player, index) => (
-                  <div
-                    key={player.id}
-                    className={`rounded-lg border-2 p-3 transition-all ${
-                      index === currentPlayerIndex
-                        ? 'border-purple-600 bg-purple-50'
-                        : 'border-gray-200'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">{player.name}</span>
-                      {index === currentPlayerIndex && (
-                        <span className="text-sm text-purple-600">● Current</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 flex justify-center gap-2">
-                <button
-                  onClick={() =>
-                    setCurrentPlayerIndex(
-                      (prev) => (prev - 1 + players.length) % players.length
-                    )
-                  }
-                  className="rounded-lg bg-gray-200 px-4 py-2 font-medium transition-all hover:bg-gray-300"
-                >
-                  ← Prev
-                </button>
-                <button
-                  onClick={() =>
-                    setCurrentPlayerIndex((prev) => (prev + 1) % players.length)
-                  }
-                  className="rounded-lg bg-gray-200 px-4 py-2 font-medium transition-all hover:bg-gray-300"
-                >
-                  Next →
-                </button>
-              </div>
-            </div>
-
-            <button
-              onClick={handleRevealImpostor}
-              className="w-full rounded-lg bg-red-600 px-6 py-4 text-xl font-semibold text-white transition-all hover:bg-red-700 active:scale-95"
+      <main className="flex-1 flex flex-col items-center justify-center w-full max-w-md">
+        <AnimatePresence mode="wait">
+          {/* Phase: Discussion */}
+          {phase === 'discussion' && (
+            <motion.div
+              key="discussion"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="flex flex-col items-center gap-8 w-full"
             >
-              🔍 {dict.play.findImpostor}
-            </button>
-          </>
-        ) : (
-          <>
-            <div className="text-center">
-              <h1 className="text-3xl font-bold text-gray-900">{dict.play.gameOver}</h1>
-            </div>
-
-            <div className="space-y-4">
-              <div className="rounded-lg bg-green-100 p-6 text-center">
-                <h2 className="mb-2 text-lg font-semibold text-green-800">
-                  {dict.reveal.yourWord}
-                </h2>
-                <div className="text-4xl font-bold text-green-900">{gameWord}</div>
+              <div className="text-center">
+                <h1 className="text-3xl font-bold text-cyan-accent mb-2">{dict.play.discussionPhase}</h1>
+                <p className="text-gray-muted">{dict.play.discussionDesc}</p>
               </div>
 
-              <div className="rounded-lg bg-red-100 p-6 text-center">
-                <h2 className="mb-4 text-lg font-semibold text-red-800">
-                  {dict.reveal.impostor}:
-                </h2>
+              {/* Starting player indicator */}
+              <Card variant="glass" className="w-full p-6 text-center">
+                <p className="text-gray-muted text-sm mb-2">{dict.play.startsFirst}</p>
                 <div className="flex items-center justify-center gap-3">
-                  <span className="text-4xl">🎭</span>
-                  <span className="text-3xl font-bold text-red-900">
-                    {impostorPlayer?.name}
+                  <motion.div
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+                    className="w-12 h-12 rounded-full bg-cyan-accent/20 border-2 border-cyan-accent/50
+                                flex items-center justify-center"
+                  >
+                    <UserIcon size={24} className="text-cyan-accent" />
+                  </motion.div>
+                  <span className="text-3xl font-bold text-cyan-accent">
+                    {players[startingPlayerIndex]?.name}
                   </span>
                 </div>
+              </Card>
+
+              <p className="text-gray-muted text-sm text-center max-w-xs">
+                {dict.play.discussionHint}
+              </p>
+
+              {/* Start voting button */}
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={handleStartVoting}
+                className="flex items-center gap-2"
+              >
+                <PlayIcon size={20} />
+                {dict.play.startVoting}
+              </Button>
+            </motion.div>
+          )}
+
+          {/* Phase: Voting */}
+          {phase === 'voting' && (
+            <motion.div
+              key="voting"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="flex flex-col items-center gap-8 w-full"
+            >
+              <div className="text-center">
+                <h1 className="text-3xl font-bold text-yellow-glow mb-2">{dict.play.votingPhase}</h1>
+                <p className="text-gray-muted">{dict.play.votingDesc}</p>
               </div>
 
-              <div className="rounded-lg border-2 border-gray-200 p-6">
-                <h3 className="mb-3 text-center font-semibold text-gray-700">
-                  All Players
-                </h3>
+              {/* Countdown timer */}
+              <CountdownTimer
+                seconds={VOTING_TIME}
+                onComplete={handleEndVoting}
+                isRunning={true}
+              />
+
+              {/* End voting button */}
+              <Button
+                variant="secondary"
+                size="lg"
+                onClick={handleEndVoting}
+                className="flex items-center gap-2"
+              >
+                <StopIcon size={20} />
+                {dict.play.endVoting}
+              </Button>
+              <p className="text-gray-muted text-sm">{dict.play.endVotingDesc}</p>
+            </motion.div>
+          )}
+
+          {/* Phase: Reveal */}
+          {phase === 'reveal' && (
+            <motion.div
+              key="reveal"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="flex flex-col items-center gap-6 w-full"
+            >
+              <h1 className="text-3xl font-bold text-yellow-glow">{dict.play.gameOver}</h1>
+
+              {/* The word */}
+              <Card variant="glass" className="w-full p-6 text-center">
+                <p className="text-gray-muted text-sm mb-2">{dict.play.theWordWas}</p>
+                <p className="text-4xl font-bold text-cyan-accent">{gameWord}</p>
+              </Card>
+
+              {/* The impostor */}
+              <Card variant="glass" className="w-full p-6 text-center border-red-500/50">
+                <p className="text-gray-muted text-sm mb-3">{dict.play.theImpostorWas}</p>
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-red-500/20 border-2 border-red-500/50
+                                  flex items-center justify-center">
+                    <MaskIcon size={24} className="text-red-400" />
+                  </div>
+                  <span className="text-3xl font-bold text-red-400">{impostorPlayer?.name}</span>
+                </div>
+              </Card>
+
+              {/* All players list */}
+              <Card variant="glass" className="w-full p-4">
                 <div className="space-y-2">
                   {players.map((player) => (
                     <div
                       key={player.id}
-                      className={`rounded-lg p-3 ${
+                      className={`flex items-center justify-between p-3 rounded-lg ${
                         player.id === impostorId
-                          ? 'bg-red-50 border-2 border-red-300'
-                          : 'bg-green-50 border-2 border-green-300'
+                          ? 'bg-red-500/10 border border-red-500/30'
+                          : 'bg-emerald-500/10 border border-emerald-500/30'
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{player.name}</span>
-                        <span
-                          className={`text-sm font-semibold ${
-                            player.id === impostorId
-                              ? 'text-red-700'
-                              : 'text-green-700'
-                          }`}
-                        >
-                          {player.id === impostorId ? '🎭 Impostor' : '👤 Civilian'}
-                        </span>
+                      <div className="flex items-center gap-2">
+                        <UserIcon
+                          size={18}
+                          className={player.id === impostorId ? 'text-red-400' : 'text-emerald-400'}
+                        />
+                        <span className="text-white font-medium">{player.name}</span>
                       </div>
+                      <span
+                        className={`text-sm font-semibold ${
+                          player.id === impostorId ? 'text-red-400' : 'text-emerald-400'
+                        }`}
+                      >
+                        {player.id === impostorId ? dict.play.impostor : dict.play.civilian}
+                      </span>
                     </div>
                   ))}
                 </div>
-              </div>
-            </div>
+              </Card>
 
-            <div className="flex gap-3">
-              <button
-                onClick={handlePlayAgain}
-                className="flex-1 rounded-lg bg-purple-600 px-6 py-3 font-semibold text-white transition-all hover:bg-purple-700 active:scale-95"
-              >
-                🎮 {dict.play.playAgain}
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+              {/* Action buttons */}
+              <div className="w-full space-y-3 mt-4">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  onClick={handlePlayAgain}
+                  className="flex items-center justify-center gap-2"
+                >
+                  <RefreshIcon size={20} />
+                  {dict.play.playAgainSamePlayers}
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  fullWidth
+                  onClick={handleBackToLobby}
+                  className="flex items-center justify-center gap-2"
+                >
+                  <HomeIcon size={20} />
+                  {dict.play.backToLobby}
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
+
+      <footer className="h-8" />
+    </motion.div>
   );
 }
