@@ -3,8 +3,7 @@
  */
 
 import type { Room } from '@/types/room';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import { apiFetch, getApiHeaders, API_BASE_URL } from './fetch-helper';
 
 export interface CreateRoomRequest {
   username: string;
@@ -58,11 +57,9 @@ export interface CheckRoomResponse {
  * Create a new game room
  */
 export async function createRoom(request: CreateRoomRequest): Promise<RoomResponse> {
-  const response = await fetch(`${API_URL}/rooms/`, {
+  const response = await apiFetch('/rooms/', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getApiHeaders('application/json'),
     body: JSON.stringify(request),
   });
 
@@ -78,7 +75,7 @@ export async function createRoom(request: CreateRoomRequest): Promise<RoomRespon
  * Get list of public rooms
  */
 export async function getPublicRooms(): Promise<PublicRoom[]> {
-  const response = await fetch(`${API_URL}/rooms/public`);
+  const response = await apiFetch('/rooms/public');
 
   if (!response.ok) {
     throw new Error('Failed to fetch public rooms');
@@ -91,7 +88,7 @@ export async function getPublicRooms(): Promise<PublicRoom[]> {
  * Get room information by ID (returns full room state)
  */
 export async function getRoom(roomId: string): Promise<Room> {
-  const response = await fetch(`${API_URL}/rooms/${roomId}`);
+  const response = await apiFetch(`/rooms/${roomId}`);
 
   if (!response.ok) {
     const error = await response.json();
@@ -105,11 +102,9 @@ export async function getRoom(roomId: string): Promise<Room> {
  * Validate and prepare to join a room
  */
 export async function joinRoom(request: JoinRoomRequest): Promise<JoinRoomResponse> {
-  const response = await fetch(`${API_URL}/rooms/${request.room_id}/join`, {
+  const response = await apiFetch(`/rooms/${request.room_id}/join`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getApiHeaders('application/json'),
     body: JSON.stringify(request),
   });
 
@@ -125,7 +120,7 @@ export async function joinRoom(request: JoinRoomRequest): Promise<JoinRoomRespon
  * Check if a room exists and if it requires a password
  */
 export async function checkRoom(roomId: string): Promise<CheckRoomResponse> {
-  const response = await fetch(`${API_URL}/rooms/${roomId}/check`);
+  const response = await apiFetch(`/rooms/${roomId}/check`);
 
   if (!response.ok) {
     const error = await response.json();
@@ -139,7 +134,7 @@ export async function checkRoom(roomId: string): Promise<CheckRoomResponse> {
  * Get Socket.IO connection URL
  */
 export function getSocketURL(): string {
-  return API_URL;
+  return API_BASE_URL;
 }
 
 /**
@@ -153,7 +148,7 @@ export async function getCategories(language: string): Promise<Array<{
     name: string;
   }>;
 }>> {
-  const response = await fetch(`${API_URL}/categories/?language=${language}`);
+  const response = await apiFetch(`/categories/?language=${language}`);
 
   if (!response.ok) {
     throw new Error('Failed to fetch categories');

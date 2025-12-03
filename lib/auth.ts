@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import { apiFetch, getApiHeaders } from './fetch-helper';
 
 export interface AuthTokens {
   access_token: string;
@@ -45,11 +45,9 @@ export function removeToken(): void {
 
 // Auth API calls
 export async function register(data: RegisterData): Promise<User> {
-  const response = await fetch(`${API_BASE_URL}/auth/register`, {
+  const response = await apiFetch('/auth/register', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getApiHeaders('application/json'),
     body: JSON.stringify(data),
   });
 
@@ -62,11 +60,9 @@ export async function register(data: RegisterData): Promise<User> {
 }
 
 export async function login(data: LoginData): Promise<AuthTokens> {
-  const response = await fetch(`${API_BASE_URL}/auth/login-json`, {
+  const response = await apiFetch('/auth/login-json', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getApiHeaders('application/json'),
     body: JSON.stringify(data),
   });
 
@@ -85,10 +81,8 @@ export async function getCurrentUser(): Promise<User | null> {
   if (!token) return null;
 
   try {
-    const response = await fetch(`${API_BASE_URL}/auth/me`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+    const response = await apiFetch('/auth/me', {
+      headers: getApiHeaders(undefined, token),
     });
 
     if (!response.ok) {

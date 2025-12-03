@@ -1,11 +1,10 @@
 import type { CategoryWithTranslations, WordWithTranslations } from './types';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import { apiFetch } from './fetch-helper';
 
 export type { CategoryWithTranslations, WordWithTranslations };
 
 export async function fetchCategories(): Promise<CategoryWithTranslations[]> {
-  const response = await fetch(`${API_BASE_URL}/categories/`);
+  const response = await apiFetch('/categories/');
   if (!response.ok) {
     throw new Error('Failed to fetch categories');
   }
@@ -15,8 +14,8 @@ export async function fetchCategories(): Promise<CategoryWithTranslations[]> {
   // Fetch translations for each category
   const categoriesWithTranslations = await Promise.all(
     categories.map(async (category: { id: number }) => {
-      const translationsResponse = await fetch(
-        `${API_BASE_URL}/categories/${category.id}/translations`
+      const translationsResponse = await apiFetch(
+        `/categories/${category.id}/translations`
       );
       const translations = await translationsResponse.json();
       return { ...category, translations };
@@ -27,7 +26,7 @@ export async function fetchCategories(): Promise<CategoryWithTranslations[]> {
 }
 
 export async function fetchWordsByCategory(categoryId: number): Promise<WordWithTranslations[]> {
-  const response = await fetch(`${API_BASE_URL}/words/?category_id=${categoryId}`);
+  const response = await apiFetch(`/words/?category_id=${categoryId}`);
   if (!response.ok) {
     throw new Error('Failed to fetch words');
   }
@@ -37,8 +36,8 @@ export async function fetchWordsByCategory(categoryId: number): Promise<WordWith
   // Fetch translations for each word
   const wordsWithTranslations = await Promise.all(
     words.map(async (word: { id: number }) => {
-      const translationsResponse = await fetch(
-        `${API_BASE_URL}/words/${word.id}/translations`
+      const translationsResponse = await apiFetch(
+        `/words/${word.id}/translations`
       );
       const translations = await translationsResponse.json();
       return { ...word, translations };
@@ -58,7 +57,7 @@ export async function getRandomWord(
     categoryIds.forEach(id => params.append('category_ids', id.toString()));
     params.append('language', language);
     
-    const response = await fetch(`${API_BASE_URL}/game/random-word?${params.toString()}`);
+    const response = await apiFetch(`/game/random-word?${params.toString()}`);
     
     if (!response.ok) {
       console.error('Failed to fetch random word:', await response.text());

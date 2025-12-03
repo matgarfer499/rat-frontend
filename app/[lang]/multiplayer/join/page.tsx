@@ -7,7 +7,7 @@ import { Button } from '@components/button';
 import { Card } from '@components/ui';
 import { LanguageSelector } from '@components/layout/LanguageSelector';
 import { useDictionary } from '@hooks/use-dictionary';
-import { getPublicRooms, joinRoom, checkRoom } from '@lib/rooms-api';
+import { getPublicRooms, joinRoom, checkRoom, getCategories } from '@lib/rooms-api';
 import type { PublicRoom, JoinRoomRequest, CheckRoomResponse } from '@lib/rooms-api';
 import {
   ArrowLeftIcon,
@@ -57,10 +57,8 @@ function JoinRoomContent() {
 
   const loadCategories = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${apiUrl}/categories/?language=${lang}`);
-      const data = await response.json();
-      setCategories(data);
+      const cats = await getCategories(lang);
+      setCategories(cats);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
