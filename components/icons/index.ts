@@ -24,3 +24,7 @@ export { HomeIcon } from './HomeIcon';
 export { ClockIcon } from './ClockIcon';
 export { DetectiveIcon } from './DetectiveIcon';
 export { JokerIcon } from './JokerIcon';
+export { DoorEnterIcon } from './DoorEnterIcon';
+export { CreateRoomIcon } from './CreateRoomIcon';
+export { LinkIcon } from './LinkIcon';
+export { CopyIcon } from './CopyIcon';
