@@ -1,11 +1,25 @@
 'use client';
 
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@components/button';
+import { Card } from '@components/ui';
+import { LanguageSelector } from '@components/layout/LanguageSelector';
 import { useDictionary } from '@hooks/use-dictionary';
 import { getPublicRooms, joinRoom, checkRoom } from '@lib/rooms-api';
 import type { PublicRoom, JoinRoomRequest, CheckRoomResponse } from '@lib/rooms-api';
+import {
+  ArrowLeftIcon,
+  UsersIcon,
+  UserIcon,
+  LockIcon,
+  UnlockIcon,
+  RefreshIcon,
+  DoorEnterIcon,
+  FolderIcon,
+  AlertIcon,
+} from '@components/icons';
 
 interface Category {
   id: number;
@@ -16,7 +30,7 @@ interface Category {
   }>;
 }
 
-export default function JoinRoomPage() {
+function JoinRoomContent() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -221,225 +235,320 @@ export default function JoinRoomPage() {
 
   if (!dict) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600">
-        <div className="text-white text-xl">{dict?.common?.loading || 'Loading...'}</div>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-game px-4">
+        <div className="w-12 h-12 border-4 border-purple-light border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600 p-4">
-      <div className="w-full max-w-2xl space-y-6 rounded-2xl bg-white p-8 shadow-2xl">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">
-            🚪 {dict.multiplayer?.joinRoom || 'Join Room'}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="flex min-h-screen flex-col items-center bg-gradient-game px-4 py-6"
+    >
+      {/* Header */}
+      <header className="w-full max-w-md flex justify-between items-center mb-6">
+        <button
+          onClick={() => router.push(`/${lang}/multiplayer`)}
+          className="p-2 rounded-lg text-gray-muted hover:text-white hover:bg-purple-base/20 transition-colors"
+        >
+          <ArrowLeftIcon size={24} />
+        </button>
+        <LanguageSelector />
+      </header>
+
+      <main className="flex-1 flex flex-col w-full max-w-md space-y-6">
+        {/* Title */}
+        <div className="text-center space-y-2">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.1 }}
+          >
+            <DoorEnterIcon size={48} className="mx-auto text-cyan-accent mb-2" />
+          </motion.div>
+          <h1 className="text-3xl font-bold text-white">
+            {dict.multiplayer?.joinRoom || 'Join Room'}
           </h1>
           {username && (
-            <p className="mt-2 text-sm text-gray-900">
-              👤 {username}
-            </p>
+            <div className="flex items-center justify-center gap-2 text-gray-muted">
+              <UserIcon size={16} />
+              <span>{username}</span>
+            </div>
           )}
         </div>
 
         {/* Join by Code */}
-        <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-gray-900">
-            {dict.multiplayer?.joinByCode || 'Join by code'}
-          </h2>
+        <Card variant="glass" className="p-4 space-y-3">
+          <div className="flex items-center gap-2 mb-2">
+            <FolderIcon size={20} className="text-cyan-accent" />
+            <h2 className="text-white font-medium">
+              {dict.multiplayer?.joinByCode || 'Join by code'}
+            </h2>
+          </div>
           <div className="flex gap-2">
             <input
               type="text"
               value={roomCode}
               onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
               placeholder={dict.multiplayer?.enterRoomCode || 'Enter room code'}
-              className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="flex-1 bg-purple-darker/50 border border-purple-base/30 rounded-xl 
+                         px-4 py-3 text-white font-mono tracking-wider placeholder-gray-muted/50
+                         focus:border-cyan-accent/50 focus:outline-none focus:ring-2 focus:ring-cyan-accent/20"
               maxLength={16}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') handleJoinByCode();
+              }}
             />
             <Button
               onClick={handleJoinByCode}
-              disabled={loading}
+              disabled={loading || !roomCode.trim()}
             >
-              {loading ? (dict.multiplayer?.joining || 'Joining...') : (dict.multiplayer?.join || 'Join')}
+              {loading ? '...' : <DoorEnterIcon size={20} />}
             </Button>
           </div>
-        </div>
+        </Card>
 
         {/* Public Rooms List */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">
-              {dict.multiplayer?.publicRooms || 'Public Rooms'}
-            </h2>
+        <Card variant="glass" className="p-4 flex-1">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <UsersIcon size={20} className="text-purple-light" />
+              <h2 className="text-white font-medium">
+                {dict.multiplayer?.publicRooms || 'Public Rooms'}
+              </h2>
+            </div>
             <button
               onClick={loadPublicRooms}
-              className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+              disabled={loadingRooms}
+              className="p-2 rounded-lg text-gray-muted hover:text-cyan-accent hover:bg-purple-base/20 
+                         transition-colors disabled:opacity-50"
             >
-              🔄 {dict.multiplayer?.refresh || 'Refresh'}
+              <RefreshIcon size={18} className={loadingRooms ? 'animate-spin' : ''} />
             </button>
           </div>
 
           {loadingRooms ? (
-            <div className="text-center py-8 text-gray-500">
-              {dict.multiplayer?.loading || 'Loading...'}
+            <div className="flex items-center justify-center py-12">
+              <div className="w-8 h-8 border-3 border-purple-light border-t-transparent rounded-full animate-spin" />
             </div>
           ) : publicRooms.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
-              {dict.multiplayer?.noPublicRooms || 'No public rooms available'}
+            <div className="text-center py-12">
+              <UsersIcon size={40} className="mx-auto text-gray-muted/30 mb-3" />
+              <p className="text-gray-muted">
+                {dict.multiplayer?.noPublicRooms || 'No public rooms available'}
+              </p>
+              <button
+                onClick={loadPublicRooms}
+                className="mt-3 text-sm text-cyan-accent hover:underline"
+              >
+                {dict.multiplayer?.refresh || 'Refresh'}
+              </button>
             </div>
           ) : (
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {publicRooms.map((room) => (
-                <div
-                  key={room.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <div>
-                    <div className="font-medium text-gray-900">
-                      {getCategoryName(room.category_id)}
-                    </div>
-                    <div className="text-sm text-gray-900">
-                      👥 {room.player_count}/{room.max_players} {dict.multiplayer?.players || 'players'}
-                    </div>
-                    <div className="text-xs text-gray-700 font-mono mt-1">
-                      {room.id}
-                    </div>
-                  </div>
-                  <Button
-                    onClick={() => handleCheckRoom(room.id)}
-                    disabled={loading || room.player_count >= room.max_players}
-                    size="sm"
+            <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+              <AnimatePresence>
+                {publicRooms.map((room, index) => (
+                  <motion.div
+                    key={room.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className={`flex items-center justify-between p-3 rounded-xl transition-all
+                      ${room.player_count >= room.max_players
+                        ? 'bg-purple-darker/30 border border-gray-muted/20 opacity-60'
+                        : 'bg-purple-darker/50 border border-purple-base/30 hover:border-cyan-accent/30'
+                      }`}
                   >
-                    {room.player_count >= room.max_players 
-                      ? '🔒 ' + (dict.multiplayer?.roomFull || 'Full')
-                      : dict.multiplayer?.join || 'Join'
-                    }
-                  </Button>
-                </div>
-              ))}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-white font-medium truncate">
+                          {getCategoryName(room.category_id)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 mt-1">
+                        <div className="flex items-center gap-1 text-sm text-gray-muted">
+                          <UsersIcon size={14} />
+                          <span>{room.player_count}/{room.max_players}</span>
+                        </div>
+                        <span className="text-xs font-mono text-gray-muted/60">
+                          {room.id}
+                        </span>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => handleCheckRoom(room.id)}
+                      disabled={loading || room.player_count >= room.max_players}
+                      size="sm"
+                      variant={room.player_count >= room.max_players ? 'secondary' : 'primary'}
+                    >
+                      {room.player_count >= room.max_players ? (
+                        <LockIcon size={16} />
+                      ) : (
+                        dict.multiplayer?.join || 'Join'
+                      )}
+                    </Button>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           )}
-        </div>
+        </Card>
+      </main>
 
-        {/* Back Button */}
-        <Button
-          onClick={() => router.push(`/${lang}/multiplayer`)}
-          variant="ghost"
-          size="lg"
-          fullWidth
-        >
-          ← {dict.common?.back || 'Back'}
-        </Button>
-      </div>
-
-      {/* Username Modal - For link access without username */}
-      {showUsernameModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full space-y-4">
-            <h3 className="text-xl font-bold text-gray-900">
-              👤 {dict.multiplayer?.enterUsername || 'Enter your username'}
-            </h3>
-            <p className="text-sm text-gray-600">
-              {dict.multiplayer?.usernameRequired || 'You need a username to join the game'}
-            </p>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder={dict.multiplayer?.username || 'Username'}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              autoFocus
-              maxLength={20}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleUsernameSubmit();
-                }
-              }}
-            />
-            <div className="flex gap-2">
-              <Button
-                onClick={handleUsernameSubmit}
-                disabled={!username.trim()}
-                fullWidth
-              >
-                {dict.common?.continue || 'Continue'}
-              </Button>
-              <Button
-                onClick={() => {
-                  setShowUsernameModal(false);
-                  router.push(`/${lang}/multiplayer`);
-                }}
-                variant="ghost"
-                fullWidth
-              >
-                {dict.common?.cancel || 'Cancel'}
-              </Button>
-            </div>
+      {/* Username Modal */}
+      <AnimatePresence>
+        {showUsernameModal && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+            >
+              <Card variant="glass" className="p-6 max-w-sm w-full space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-cyan-accent/20 flex items-center justify-center">
+                    <UserIcon size={24} className="text-cyan-accent" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">
+                      {dict.multiplayer?.enterUsername || 'Enter your username'}
+                    </h3>
+                    <p className="text-sm text-gray-muted">
+                      {dict.multiplayer?.usernameRequired || 'Required to join'}
+                    </p>
+                  </div>
+                </div>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder={dict.multiplayer?.username || 'Username'}
+                  className="w-full bg-purple-darker/50 border border-purple-base/30 rounded-xl 
+                             px-4 py-3 text-white placeholder-gray-muted/50
+                             focus:border-cyan-accent/50 focus:outline-none focus:ring-2 focus:ring-cyan-accent/20"
+                  autoFocus
+                  maxLength={20}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') handleUsernameSubmit();
+                  }}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleUsernameSubmit}
+                    disabled={!username.trim()}
+                    fullWidth
+                  >
+                    {dict.common?.continue || 'Continue'}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setShowUsernameModal(false);
+                      router.push(`/${lang}/multiplayer`);
+                    }}
+                    variant="ghost"
+                    fullWidth
+                  >
+                    {dict.common?.cancel || 'Cancel'}
+                  </Button>
+                </div>
+              </Card>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
-      {/* Password Modal - For private rooms */}
-      {showPasswordModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full space-y-4">
-            <h3 className="text-xl font-bold text-gray-900">
-              🔒 {dict.multiplayer?.passwordRequired || 'Password required'}
-            </h3>
-            {pendingRoomInfo && (
-              <p className="text-sm text-gray-600">
-                {dict.multiplayer?.privateRoomMessage || 'This is a private room. Enter the password to join.'}
-              </p>
-            )}
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setPasswordError('');
-              }}
-              placeholder={dict.multiplayer?.enterPassword || 'Enter password'}
-              className={`w-full rounded-lg border px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 ${
-                passwordError 
-                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
-                  : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-              }`}
-              autoFocus
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handlePasswordSubmit();
-                }
-              }}
-            />
-            {passwordError && (
-              <p className="text-sm text-red-600">
-                ❌ {passwordError}
-              </p>
-            )}
-            <div className="flex gap-2">
-              <Button
-                onClick={handlePasswordSubmit}
-                disabled={loading}
-                fullWidth
-              >
-                {loading ? (dict.multiplayer?.joining || 'Joining...') : (dict.multiplayer?.join || 'Join')}
-              </Button>
-              <Button
-                onClick={() => {
-                  setShowPasswordModal(false);
-                  setPassword('');
-                  setPasswordError('');
-                  setPendingRoomId('');
-                  setPendingRoomInfo(null);
-                }}
-                variant="ghost"
-                fullWidth
-              >
-                {dict.common?.cancel || 'Cancel'}
-              </Button>
-            </div>
+      {/* Password Modal */}
+      <AnimatePresence>
+        {showPasswordModal && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+            >
+              <Card variant="glass" className="p-6 max-w-sm w-full space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-yellow-glow/20 flex items-center justify-center">
+                    <LockIcon size={24} className="text-yellow-glow" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">
+                      {dict.multiplayer?.passwordRequired || 'Password required'}
+                    </h3>
+                    <p className="text-sm text-gray-muted">
+                      {dict.multiplayer?.privateRoomMessage || 'This room is private'}
+                    </p>
+                  </div>
+                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setPasswordError('');
+                  }}
+                  placeholder={dict.multiplayer?.enterPassword || 'Enter password'}
+                  className={`w-full bg-purple-darker/50 border rounded-xl 
+                             px-4 py-3 text-white placeholder-gray-muted/50
+                             focus:outline-none focus:ring-2 ${
+                               passwordError
+                                 ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+                                 : 'border-purple-base/30 focus:border-cyan-accent/50 focus:ring-cyan-accent/20'
+                             }`}
+                  autoFocus
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') handlePasswordSubmit();
+                  }}
+                />
+                {passwordError && (
+                  <div className="flex items-center gap-2 text-red-400 text-sm">
+                    <AlertIcon size={16} />
+                    <span>{passwordError}</span>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handlePasswordSubmit}
+                    disabled={loading}
+                    fullWidth
+                  >
+                    {loading ? (dict.multiplayer?.joining || 'Joining...') : (dict.multiplayer?.join || 'Join')}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setShowPasswordModal(false);
+                      setPassword('');
+                      setPasswordError('');
+                      setPendingRoomId('');
+                      setPendingRoomInfo(null);
+                    }}
+                    variant="ghost"
+                    fullWidth
+                  >
+                    {dict.common?.cancel || 'Cancel'}
+                  </Button>
+                </div>
+              </Card>
+            </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+export default function JoinRoomPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-game px-4">
+          <div className="w-12 h-12 border-4 border-purple-light border-t-transparent rounded-full animate-spin" />
         </div>
-      )}
-    </div>
+      }
+    >
+      <JoinRoomContent />
+    </Suspense>
   );
 }
