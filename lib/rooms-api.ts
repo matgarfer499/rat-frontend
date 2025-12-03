@@ -141,3 +141,23 @@ export async function checkRoom(roomId: string): Promise<CheckRoomResponse> {
 export function getSocketURL(): string {
   return API_URL;
 }
+
+/**
+ * Get categories with translations
+ */
+export async function getCategories(language: string): Promise<Array<{
+  id: number;
+  key: string;
+  translations: Array<{
+    language: string;
+    name: string;
+  }>;
+}>> {
+  const response = await fetch(`${API_URL}/categories/?language=${language}`);
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch categories');
+  }
+
+  return response.json();
+}
