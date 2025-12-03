@@ -6,12 +6,23 @@ import { motion } from 'framer-motion';
 import { Player } from '@lib/types';
 import { useDictionary } from '@hooks/use-dictionary';
 import { LanguageSelector } from '@components/layout/LanguageSelector';
-import { StepIndicator, NumberStepper, Input, Card } from '@components/ui';
+import { StepIndicator, NumberStepper, Input, Card, TimeSelector, ToggleSwitch } from '@components/ui';
 import { Button } from '@components/button';
-import { SettingsIcon, UserIcon, ArrowLeftIcon } from '@components/icons';
+import { SettingsIcon, UserIcon, ArrowLeftIcon, ClockIcon } from '@components/icons';
 
 const MIN_PLAYERS = 3;
 const MAX_PLAYERS = 12;
+
+// Time constants (in seconds)
+const DEFAULT_VOTING_TIME = 60;
+const MIN_VOTING_TIME = 15;
+const MAX_VOTING_TIME = 180;
+const VOTING_TIME_STEP = 15;
+
+const DEFAULT_DISCUSSION_TIME = 300; // 5 minutes
+const MIN_DISCUSSION_TIME = 60;
+const MAX_DISCUSSION_TIME = 600;
+const DISCUSSION_TIME_STEP = 30;
 
 export default function SetupPage() {
   const router = useRouter();
@@ -23,6 +34,11 @@ export default function SetupPage() {
   const [playerNames, setPlayerNames] = useState<string[]>(Array(MIN_PLAYERS).fill(''));
   const [errors, setErrors] = useState<string[]>([]);
   const [generalError, setGeneralError] = useState<string>('');
+  
+  // Game rules state
+  const [votingTime, setVotingTime] = useState(DEFAULT_VOTING_TIME);
+  const [discussionTimerEnabled, setDiscussionTimerEnabled] = useState(false);
+  const [discussionTime, setDiscussionTime] = useState(DEFAULT_DISCUSSION_TIME);
 
   const handlePlayerCountChange = (count: number) => {
     setPlayerCount(count);
@@ -118,6 +134,11 @@ export default function SetupPage() {
     // Store in sessionStorage - use UI language as game language
     sessionStorage.setItem('gameLanguage', lang);
     sessionStorage.setItem('gamePlayers', JSON.stringify(players));
+    
+    // Store game rules
+    sessionStorage.setItem('votingTime', String(votingTime));
+    sessionStorage.setItem('discussionTimerEnabled', String(discussionTimerEnabled));
+    sessionStorage.setItem('discussionTime', String(discussionTime));
 
     router.push(`/${lang}/categories`);
   };
@@ -210,6 +231,64 @@ export default function SetupPage() {
                   error={errors[index]}
                 />
               ))}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="h-px bg-purple-base/30" />
+
+          {/* Game Rules */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <ClockIcon size={20} className="text-purple-light" />
+              <h2 className="text-lg font-semibold text-white">
+                {dict.setup.gameRules}
+              </h2>
+            </div>
+
+            <div className="space-y-5">
+              {/* Voting time */}
+              <TimeSelector
+                value={votingTime}
+                onChange={setVotingTime}
+                min={MIN_VOTING_TIME}
+                max={MAX_VOTING_TIME}
+                step={VOTING_TIME_STEP}
+                label={dict.setup.votingTime}
+              />
+
+              {/* Discussion timer toggle */}
+              <div className="space-y-3">
+                <ToggleSwitch
+                  checked={discussionTimerEnabled}
+                  onChange={setDiscussionTimerEnabled}
+                  label={dict.setup.enableDiscussionTimer}
+                  description={dict.setup.enableDiscussionTimerDesc}
+                />
+                
+                {/* Discussion time (only if enabled) */}
+                <motion.div
+                  initial={false}
+                  animate={{ 
+                    height: discussionTimerEnabled ? 'auto' : 0,
+                    opacity: discussionTimerEnabled ? 1 : 0,
+                  }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="pt-2">
+                    <TimeSelector
+                      value={discussionTime}
+                      onChange={setDiscussionTime}
+                      min={MIN_DISCUSSION_TIME}
+                      max={MAX_DISCUSSION_TIME}
+                      step={DISCUSSION_TIME_STEP}
+                      label={dict.setup.discussionTime}
+                      disabled={!discussionTimerEnabled}
+                    />
+                  </div>
+                </motion.div>
+              </div>
             </div>
           </div>
         </Card>
