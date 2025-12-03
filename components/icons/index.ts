@@ -16,3 +16,8 @@ export { LockIcon } from './LockIcon';
 export { UnlockIcon } from './UnlockIcon';
 export { SwipeUpIcon } from './SwipeUpIcon';
 export { EyeIcon } from './EyeIcon';
+export { PlayIcon } from './PlayIcon';
+export { StopIcon } from './StopIcon';
+export { RefreshIcon } from './RefreshIcon';
+export { MaskIcon } from './MaskIcon';
+export { HomeIcon } from './HomeIcon';
