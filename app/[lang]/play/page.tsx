@@ -13,8 +13,6 @@ import { PlayIcon, StopIcon, RefreshIcon, MaskIcon, HomeIcon, UserIcon } from '@
 
 type GamePhase = 'discussion' | 'voting' | 'reveal';
 
-const VOTING_TIME = 60; // 1 minute for voting
-
 export default function PlayPage() {
   const router = useRouter();
   const params = useParams();
@@ -25,6 +23,11 @@ export default function PlayPage() {
   const [impostorId, setImpostorId] = useState<string>('');
   const [phase, setPhase] = useState<GamePhase>('discussion');
   const [startingPlayerIndex, setStartingPlayerIndex] = useState<number>(0);
+  
+  // Game rules from setup
+  const [votingTime, setVotingTime] = useState(60);
+  const [discussionTimerEnabled, setDiscussionTimerEnabled] = useState(false);
+  const [discussionTime, setDiscussionTime] = useState(300);
 
   useEffect(() => {
     const playersData = sessionStorage.getItem('gamePlayers');
@@ -42,6 +45,15 @@ export default function PlayPage() {
     setImpostorId(impostor);
     // Select random starting player
     setStartingPlayerIndex(Math.floor(Math.random() * parsedPlayers.length));
+    
+    // Load game rules
+    const storedVotingTime = sessionStorage.getItem('votingTime');
+    const storedDiscussionEnabled = sessionStorage.getItem('discussionTimerEnabled');
+    const storedDiscussionTime = sessionStorage.getItem('discussionTime');
+    
+    if (storedVotingTime) setVotingTime(parseInt(storedVotingTime, 10));
+    if (storedDiscussionEnabled) setDiscussionTimerEnabled(storedDiscussionEnabled === 'true');
+    if (storedDiscussionTime) setDiscussionTime(parseInt(storedDiscussionTime, 10));
   }, [router, lang]);
 
   const handleStartVoting = () => {
@@ -128,6 +140,15 @@ export default function PlayPage() {
                 {dict.play.discussionHint}
               </p>
 
+              {/* Discussion timer if enabled */}
+              {discussionTimerEnabled && (
+                <CountdownTimer
+                  seconds={discussionTime}
+                  onComplete={handleStartVoting}
+                  isRunning={true}
+                />
+              )}
+
               {/* Start voting button */}
               <Button
                 variant="primary"
@@ -157,7 +178,7 @@ export default function PlayPage() {
 
               {/* Countdown timer */}
               <CountdownTimer
-                seconds={VOTING_TIME}
+                seconds={votingTime}
                 onComplete={handleEndVoting}
                 isRunning={true}
               />
