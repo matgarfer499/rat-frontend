@@ -3,3 +3,7 @@ export { RoleDisplay } from './RoleDisplay';
 export { RevealCard } from './RevealCard';
 export { CountdownTimer } from './CountdownTimer';
 export { RevealedContent } from './RevealedContent';
+export { DiscussionTimer } from './DiscussionTimer';
+export { PlayerCard } from './PlayerCard';
+export { VotingPhase } from './VotingPhase';
+export { RevealPhase } from './RevealPhase';

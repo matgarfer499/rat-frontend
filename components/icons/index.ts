@@ -32,3 +32,4 @@ export { CopyIcon } from './CopyIcon';
 export { SearchIcon } from './SearchIcon';
 export { RandomIcon } from './RandomIcon';
 export { ShieldIcon } from './ShieldIcon';
+export { CloseIcon } from './CloseIcon';

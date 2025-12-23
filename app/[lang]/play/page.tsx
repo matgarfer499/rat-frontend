@@ -1,15 +1,13 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Player } from '@lib/types';
 import { useDictionary } from '@hooks/use-dictionary';
-import { LanguageSelector } from '@components/layout/LanguageSelector';
-import { CountdownTimer } from '@components/game';
-import { Button } from '@components/button';
-import { Card } from '@components/ui';
-import { PlayIcon, StopIcon, RefreshIcon, MaskIcon, HomeIcon, UserIcon, DetectiveIcon, JokerIcon } from '@components/icons';
+import { useCountdown } from '@hooks/use-countdown';
+import { DiscussionTimer, PlayerCard, VotingPhase, RevealPhase } from '@components/game';
+import { PlayIcon } from '@components/icons';
 
 type GamePhase = 'discussion' | 'voting' | 'reveal';
 
@@ -25,11 +23,15 @@ export default function PlayPage() {
   const [jokerId, setJokerId] = useState<string | null>(null);
   const [phase, setPhase] = useState<GamePhase>('discussion');
   const [startingPlayerIndex, setStartingPlayerIndex] = useState<number>(0);
+  const [votedPlayerId, setVotedPlayerId] = useState<string | null>(null);
   
   // Game rules from setup
   const [votingTime, setVotingTime] = useState(60);
   const [discussionTimerEnabled, setDiscussionTimerEnabled] = useState(false);
   const [discussionTime, setDiscussionTime] = useState(300);
+  
+  // Timer with custom hook
+  const countdown = useCountdown(discussionTime);
 
   useEffect(() => {
     const playersData = sessionStorage.getItem('gamePlayers');
@@ -60,17 +62,27 @@ export default function PlayPage() {
     const storedDiscussionTime = sessionStorage.getItem('discussionTime');
     
     if (storedVotingTime) setVotingTime(parseInt(storedVotingTime, 10));
-    if (storedDiscussionEnabled) setDiscussionTimerEnabled(storedDiscussionEnabled === 'true');
-    if (storedDiscussionTime) setDiscussionTime(parseInt(storedDiscussionTime, 10));
+    if (storedDiscussionEnabled) {
+      const enabled = storedDiscussionEnabled === 'true';
+      setDiscussionTimerEnabled(enabled);
+      if (enabled && storedDiscussionTime) {
+        const time = parseInt(storedDiscussionTime, 10);
+        setDiscussionTime(time);
+        countdown.reset(time);
+        countdown.start();
+      }
+    }
   }, [router, lang]);
 
   const handleStartVoting = () => {
+    countdown.stop();
     setPhase('voting');
   };
 
-  const handleEndVoting = useCallback(() => {
+  const handleConfirmVote = (playerId: string | null) => {
+    setVotedPlayerId(playerId === 'skip' ? null : playerId);
     setPhase('reveal');
-  }, []);
+  };
 
   const handlePlayAgain = () => {
     // Keep players but clear game state, go to categories
@@ -87,8 +99,6 @@ export default function PlayPage() {
     router.push(`/${lang}`);
   };
 
-  const impostorPlayer = players.find((p) => p.id === impostorId);
-
   if (players.length === 0 || !dict) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -103,14 +113,14 @@ export default function PlayPage() {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="flex min-h-screen flex-col items-center px-4 py-6 sm:py-8"
+      className="flex min-h-screen flex-col items-center"
     >
-      {/* Header */}
-      <header className="w-full max-w-md flex justify-end mb-6">
-        <LanguageSelector />
-      </header>
+      {/* Background gradient */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-20 dark:opacity-10 
+                      bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] 
+                      from-primary via-background-dark to-background-dark" />
 
-      <main className="flex-1 flex flex-col items-center justify-center w-full max-w-md">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center w-full max-w-md px-4 py-6">
         <AnimatePresence mode="wait">
           {/* Phase: Discussion */}
           {phase === 'discussion' && (
@@ -121,195 +131,111 @@ export default function PlayPage() {
               exit={{ opacity: 0, scale: 0.9 }}
               className="flex flex-col items-center gap-8 w-full"
             >
-              <div className="text-center">
-                <h1 className="text-3xl font-bold text-cyan-accent mb-2">{dict.play.discussionPhase}</h1>
-                <p className="text-gray-muted">{dict.play.discussionDesc}</p>
-              </div>
-
-              {/* Starting player indicator */}
-              <Card variant="glass" className="w-full p-6 text-center">
-                <p className="text-gray-muted text-sm mb-2">{dict.play.startsFirst}</p>
-                <div className="flex items-center justify-center gap-3">
-                  <motion.div
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
-                    className="w-12 h-12 rounded-full bg-cyan-accent/20 border-2 border-cyan-accent/50
-                                flex items-center justify-center"
-                  >
-                    <UserIcon size={24} className="text-cyan-accent" />
-                  </motion.div>
-                  <span className="text-3xl font-bold text-cyan-accent">
-                    {players[startingPlayerIndex]?.name}
-                  </span>
-                </div>
-              </Card>
-
-              <p className="text-gray-muted text-sm text-center max-w-xs">
-                {dict.play.discussionHint}
-              </p>
-
-              {/* Discussion timer if enabled */}
+              {/* Timer Section - Only if enabled */}
               {discussionTimerEnabled && (
-                <CountdownTimer
-                  seconds={discussionTime}
-                  onComplete={handleStartVoting}
-                  isRunning={true}
+                <DiscussionTimer
+                  remainingTime={countdown.remainingTime}
+                  minutesLabel={dict.play.minutes || 'Minutos'}
+                  secondsLabel={dict.play.seconds || 'Segundos'}
                 />
               )}
 
-              {/* Start voting button */}
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={handleStartVoting}
-                className="flex items-center gap-2"
-              >
-                <PlayIcon size={20} />
-                {dict.play.startVoting}
-              </Button>
+              {/* Context Text */}
+              <div className="flex flex-col items-center text-center gap-2 mt-4">
+                <h3 className="text-gray-900 dark:text-white tracking-tight text-xl font-bold leading-tight">
+                  {dict.play.startsFirst}
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">
+                  {dict.play.discussionHint}
+                </p>
+              </div>
+
+              {/* Player Card */}
+              <PlayerCard
+                playerName={players[startingPlayerIndex]?.name}
+                activeTurnLabel={dict.play.activeTurn || 'Turno activo'}
+              />
             </motion.div>
           )}
 
           {/* Phase: Voting */}
           {phase === 'voting' && (
-            <motion.div
-              key="voting"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="flex flex-col items-center gap-8 w-full"
-            >
-              <div className="text-center">
-                <h1 className="text-3xl font-bold text-yellow-glow mb-2">{dict.play.votingPhase}</h1>
-                <p className="text-gray-muted">{dict.play.votingDesc}</p>
-              </div>
-
-              {/* Countdown timer */}
-              <CountdownTimer
-                seconds={votingTime}
-                onComplete={handleEndVoting}
-                isRunning={true}
-              />
-
-              {/* End voting button */}
-              <Button
-                variant="secondary"
-                size="lg"
-                onClick={handleEndVoting}
-                className="flex items-center gap-2"
-              >
-                <StopIcon size={20} />
-                {dict.play.endVoting}
-              </Button>
-              <p className="text-gray-muted text-sm">{dict.play.endVotingDesc}</p>
-            </motion.div>
+            <VotingPhase
+              players={players}
+              remainingTime={countdown.remainingTime}
+              onConfirmVote={handleConfirmVote}
+              dict={{
+                votingInProgress: dict.play.votingInProgress || 'Votación en curso',
+                whoIsMrWhite: dict.play.whoIsMrWhite || '¿Quién es El Señor Blanco?',
+                votingInstructions: dict.play.votingInstructions || 'Analiza el comportamiento y vota para eliminar al sospechoso.',
+                timeRemaining: dict.play.timeRemaining || 'Tiempo restante',
+                skipVote: dict.play.skipVote || 'Saltar Voto',
+                skipVoteDesc: dict.play.skipVoteDesc || 'Abstenerse en esta ronda',
+                confirmVote: dict.play.confirmVote || 'Confirmar Voto',
+                cannotVoteSelf: dict.play.cannotVoteSelf || 'No puedes votarte a ti mismo',
+                suspect: dict.play.suspect || 'Sospechoso',
+              }}
+            />
           )}
 
           {/* Phase: Reveal */}
           {phase === 'reveal' && (
-            <motion.div
-              key="reveal"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="flex flex-col items-center gap-6 w-full"
-            >
-              <h1 className="text-3xl font-bold text-yellow-glow">{dict.play.gameOver}</h1>
-
-              {/* The word */}
-              <Card variant="glass" className="w-full p-6 text-center">
-                <p className="text-gray-muted text-sm mb-2">{dict.play.theWordWas}</p>
-                <p className="text-4xl font-bold text-cyan-accent">{gameWord}</p>
-              </Card>
-
-              {/* The impostor */}
-              <Card variant="glass" className="w-full p-6 text-center border-red-500/50">
-                <p className="text-gray-muted text-sm mb-3">{dict.play.theImpostorWas}</p>
-                <div className="flex items-center justify-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-red-500/20 border-2 border-red-500/50
-                                  flex items-center justify-center">
-                    <MaskIcon size={24} className="text-red-400" />
-                  </div>
-                  <span className="text-3xl font-bold text-red-400">{impostorPlayer?.name}</span>
-                </div>
-              </Card>
-
-              {/* All players list */}
-              <Card variant="glass" className="w-full p-4">
-                <div className="space-y-2">
-                  {players.map((player) => {
-                    const isImpostor = player.id === impostorId;
-                    const isDetective = player.id === detectiveId;
-                    const isJoker = player.id === jokerId;
-                    
-                    // Determine role styling
-                    let bgClass = 'bg-emerald-500/10 border-emerald-500/30';
-                    let textClass = 'text-emerald-400';
-                    let roleLabel = dict.play.civilian;
-                    let RoleIcon = UserIcon;
-                    
-                    if (isImpostor) {
-                      bgClass = 'bg-red-500/10 border-red-500/30';
-                      textClass = 'text-red-400';
-                      roleLabel = dict.play.impostor;
-                      RoleIcon = MaskIcon;
-                    } else if (isDetective) {
-                      bgClass = 'bg-blue-500/10 border-blue-500/30';
-                      textClass = 'text-blue-400';
-                      roleLabel = dict.play.detective || 'Detective';
-                      RoleIcon = DetectiveIcon;
-                    } else if (isJoker) {
-                      bgClass = 'bg-yellow-500/10 border-yellow-500/30';
-                      textClass = 'text-yellow-400';
-                      roleLabel = dict.play.joker || 'Joker';
-                      RoleIcon = JokerIcon;
-                    }
-                    
-                    return (
-                      <div
-                        key={player.id}
-                        className={`flex items-center justify-between p-3 rounded-lg border ${bgClass}`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <RoleIcon size={18} className={textClass} />
-                          <span className="text-white font-medium">{player.name}</span>
-                        </div>
-                        <span className={`text-sm font-semibold ${textClass}`}>
-                          {roleLabel}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </Card>
-
-              {/* Action buttons */}
-              <div className="w-full space-y-3 mt-4">
-                <Button
-                  variant="primary"
-                  size="lg"
-                  fullWidth
-                  onClick={handlePlayAgain}
-                  className="flex items-center justify-center gap-2"
-                >
-                  <RefreshIcon size={20} />
-                  {dict.play.playAgainSamePlayers}
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  fullWidth
-                  onClick={handleBackToLobby}
-                  className="flex items-center justify-center gap-2"
-                >
-                  <HomeIcon size={20} />
-                  {dict.play.backToLobby}
-                </Button>
-              </div>
-            </motion.div>
+            <RevealPhase
+              players={players}
+              gameWord={gameWord}
+              impostorId={impostorId}
+              detectiveId={detectiveId}
+              jokerId={jokerId}
+              votedPlayerId={votedPlayerId}
+              onPlayAgain={handlePlayAgain}
+              onBackToLobby={handleBackToLobby}
+              dict={{
+                results: dict.play.results || 'Resultados',
+                civiliansWin: dict.play.civiliansWin || '¡Ganan los Civiles!',
+                impostorWins: dict.play.impostorWins || '¡Gana el Impostor!',
+                jokerWins: dict.play.jokerWins || '¡Gana el Joker!',
+                civiliansWinDesc: dict.play.civiliansWinDesc || 'Descubrieron al impostor antes de que se acabara el tiempo.',
+                impostorWinsDesc: dict.play.impostorWinsDesc || 'El impostor logró engañar a todos.',
+                jokerWinsDesc: dict.play.jokerWinsDesc || 'El joker fue descubierto y gana la partida.',
+                theWordWas: dict.play.theWordWas || 'La Palabra Era',
+                rolesRevealed: dict.play.rolesRevealed || 'Roles Revelados',
+                playAgainSamePlayers: dict.play.playAgainSamePlayers,
+                backToLobby: dict.play.backToLobby,
+                civilian: dict.play.civilian,
+                impostor: dict.play.impostor,
+                detective: dict.play.detective,
+                joker: dict.play.joker,
+                correctVote: dict.play.correctVote || 'Voto Correcto',
+                captured: dict.play.captured || 'Capturado',
+                survivor: dict.play.survivor || 'Sobreviviente',
+                eliminated: dict.play.eliminated || 'Eliminado',
+                youLabel: dict.play.youLabel || 'Tú',
+              }}
+            />
           )}
         </AnimatePresence>
       </main>
+
+      {/* Footer / Action Button - Only for discussion phase */}
+      {phase === 'discussion' && (
+        <footer className="relative z-10 p-6 pb-8 w-full max-w-md mx-auto">
+          <button
+            onClick={handleStartVoting}
+            className="group relative flex w-full cursor-pointer items-center justify-center 
+                       overflow-hidden rounded-xl bg-primary h-14 text-white gap-3 text-lg 
+                       font-bold tracking-[0.015em] shadow-[0_0_20px_rgba(13,89,242,0.3)] 
+                       transition-all hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(13,89,242,0.5)] 
+                       active:scale-[0.98]"
+          >
+            <span className="absolute inset-0 bg-white/20 translate-y-full 
+                             group-hover:translate-y-0 transition-transform duration-300 ease-out" />
+            <span className="relative flex items-center gap-2 uppercase">
+              <PlayIcon size={24} />
+              {dict.play.startVoting}
+            </span>
+          </button>
+        </footer>
+      )}
 
       <footer className="h-8" />
     </motion.div>
