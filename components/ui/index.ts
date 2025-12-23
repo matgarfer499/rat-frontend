@@ -13,5 +13,6 @@ export { ToggleCard } from './ToggleCard';
 export { ActionButton } from './ActionButton';
 export { PlayerCounter } from './PlayerCounter';
 export { PlayerInput } from './PlayerInput';
+export { PlayerBadge } from './PlayerBadge';
 export { RangeSlider } from './RangeSlider';
 export { RoleToggle } from './RoleToggle';

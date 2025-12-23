@@ -2,15 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Player, PlayerRole } from '@lib/types';
 import { getRandomWord } from '@lib/api';
 import { useDictionary } from '@hooks/use-dictionary';
-import { LanguageSelector } from '@components/layout/LanguageSelector';
-import { RevealCard, RoleDisplay, PlayerProgress } from '@components/game';
-import { Button } from '@components/button';
-import { Card } from '@components/ui';
-import { ArrowRightIcon, UserIcon } from '@components/icons';
+import { RevealCard, RevealedContent } from '@components/game';
+import { ArrowLeftIcon, ArrowRightIcon } from '@components/icons';
+import { PlayerBadge } from '@components/ui';
 
 export default function RevealPage() {
   const router = useRouter();
@@ -114,7 +111,6 @@ export default function RevealPage() {
 
   const currentPlayer = players[currentPlayerIndex];
   const isLastPlayer = currentPlayerIndex === players.length - 1;
-  const nextPlayer = !isLastPlayer ? players[currentPlayerIndex + 1] : null;
 
   const handleRevealed = () => {
     setHasRevealed(true);
@@ -134,40 +130,90 @@ export default function RevealPage() {
     }
   };
 
+  const handleBack = () => {
+    router.push(`/${lang}/categories`);
+  };
+
+  // Get role color for word display
+  const getRoleColor = (role: PlayerRole) => {
+    switch (role) {
+      case 'civilian':
+      case 'detective':
+        return 'text-blue-500';
+      case 'impostor':
+        return 'text-red-500';
+      case 'joker':
+        return 'text-orange-500';
+      default:
+        return 'text-white';
+    }
+  };
+
+  const getRoleLabel = (role: PlayerRole) => {
+    switch (role) {
+      case 'civilian':
+        return dict?.reveal.youAreCivilian;
+      case 'impostor':
+        return dict?.reveal.youAreImpostor;
+      case 'detective':
+        return dict?.reveal.youAreDetective;
+      case 'joker':
+        return dict?.reveal.youAreJoker;
+      default:
+        return '';
+    }
+  };
+
   if (loading || !currentPlayer || !dict) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-purple-light text-xl animate-pulse" />
+      <div className="flex min-h-screen items-center justify-center bg-background-dark">
+        <div className="text-xl animate-pulse text-white" />
       </div>
     );
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="flex min-h-screen flex-col items-center px-4 py-6 sm:py-8"
-    >
+    <div className="bg-background-dark min-h-screen flex flex-col font-display antialiased overflow-hidden text-white">
       {/* Header */}
-      <header className="w-full max-w-md flex justify-end mb-6">
-        <LanguageSelector />
-      </header>
+      <div className="flex items-center px-4 py-4 justify-between w-full z-20 relative">
+        <button 
+          onClick={handleBack}
+          className="text-white/80 flex size-12 shrink-0 items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+        >
+          <ArrowLeftIcon size={24} />
+        </button>
+        <div className="flex flex-col items-center flex-1">
+          <h2 className="text-white text-lg font-black tracking-wider uppercase">R.A.T.</h2>
+          <span className="text-[10px] text-white/50 tracking-[0.2em] font-medium uppercase">
+            Recognize A Traitor
+          </span>
+        </div>
+        <div className="w-12" /> {/* Spacer for centering */}
+      </div>
 
-      <main className="flex-1 flex flex-col w-full max-w-md">
-        {/* Player indicator */}
-        <div className="text-center mb-6">
-          <p className="text-gray-muted text-sm mb-1">
-            {dict.reveal.playerOf
-              .replace('{current}', String(currentPlayerIndex + 1))
-              .replace('{total}', String(players.length))}
-          </p>
-          <h1 className="text-3xl font-bold text-white">{currentPlayer.name}</h1>
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col items-center justify-between w-full max-w-md mx-auto px-6 pb-8 relative z-10">
+        {/* Player Info */}
+        <div className="flex w-full flex-col gap-4 items-center pt-4">
+          <div className="flex flex-col items-center justify-center gap-1">
+            <h3 className="text-white text-2xl font-bold leading-tight tracking-tight text-center">
+              Turno de {currentPlayer.name}
+            </h3>
+            <PlayerBadge 
+              playerNumber={currentPlayerIndex + 1}
+              label={dict.reveal.playerNumber}
+            />
+          </div>
         </div>
 
-        {/* Reveal card with role behind */}
-        <div className="flex-1 flex flex-col justify-center mb-6">
+        {/* Reveal Card */}
+        <div className="w-full relative h-[420px] my-6 group">
+          {/* Background blurred card */}
+          <div className="absolute inset-0 bg-primary rounded-[2.5rem] flex flex-col items-center justify-center p-8 text-center transform scale-95 opacity-50 blur-[2px] z-0">
+            <p className="text-white/50 text-3xl font-black uppercase">SECRET</p>
+          </div>
+
+          {/* Main Card */}
           <RevealCard
             onRevealed={handleRevealed}
             hasRevealed={hasRevealed}
@@ -175,71 +221,35 @@ export default function RevealPage() {
             holdText={dict.reveal.holdToSee}
             revealAgainText={dict.reveal.slideToRevealAgain}
           >
-            <RoleDisplay
+            <RevealedContent
               role={currentPlayer.role || 'civilian'}
+              roleLabel={getRoleLabel(currentPlayer.role || 'civilian')}
               word={currentPlayer.word}
-              labels={{
-                impostor: dict.reveal.youAreImpostor,
-                civilian: dict.reveal.youAreCivilian,
-                detective: dict.reveal.youAreDetective,
-                joker: dict.reveal.youAreJoker,
-              }}
-              wordLabel={dict.reveal.yourWord}
+              roleColor={getRoleColor(currentPlayer.role || 'civilian')}
+              yourRoleLabel={dict.reveal.yourRole}
+              yourWordLabel={dict.reveal.yourWord}
+              dontKnowWordLabel={dict.reveal.dontKnowWord}
               detectiveHint={dict.reveal.detectiveHint}
               jokerHint={dict.reveal.jokerHint}
             />
           </RevealCard>
         </div>
 
-        {/* Next player info & button */}
-        <AnimatePresence>
-          {hasRevealed && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="space-y-4"
-            >
-              {/* Pass device message */}
-              {nextPlayer && (
-                <Card variant="glass" className="p-4 text-center">
-                  <p className="text-gray-muted text-sm mb-1">{dict.reveal.passDevice}</p>
-                  <div className="flex items-center justify-center gap-2">
-                    <UserIcon size={20} className="text-purple-light" />
-                    <span className="text-white font-semibold text-lg">{nextPlayer.name}</span>
-                  </div>
-                </Card>
-              )}
-
-              {/* All ready message */}
-              {isLastPlayer && (
-                <Card variant="glass" className="p-4 text-center">
-                  <p className="text-emerald-400 font-semibold">{dict.reveal.allReady}</p>
-                </Card>
-              )}
-
-              {/* Next/Start button */}
-              <Button
-                variant="primary"
-                size="lg"
-                fullWidth
-                onClick={handleNext}
-                className="flex items-center justify-center gap-2"
-              >
-                {isLastPlayer ? dict.reveal.startGame : dict.reveal.nextPlayer}
-                <ArrowRightIcon size={20} />
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Progress dots */}
-        <div className="mt-8">
-          <PlayerProgress current={currentPlayerIndex} total={players.length} />
+        {/* Bottom Section - Always visible */}
+        <div className="w-full flex flex-col gap-5">
+          <p className="text-[#90a4cb] text-sm font-normal leading-relaxed text-center px-4">
+            Memoriza tu palabra. Al soltar la tarjeta, la información se ocultará de nuevo automáticamente por seguridad.
+          </p>
+          <button
+            onClick={handleNext}
+            className="w-full bg-primary hover:bg-primary-dark active:scale-[0.98] transition-all duration-200 text-white font-bold text-base h-14 rounded-xl shadow-[0_0_20px_rgba(59,130,246,0.4)] flex items-center justify-center gap-3 group/btn relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300"></div>
+            <span className="relative z-10">{isLastPlayer ? dict.reveal.startGame : dict.reveal.confirmAndPass}</span>
+            <ArrowRightIcon size={20} className="relative z-10 group-hover/btn:translate-x-1 transition-transform" />
+          </button>
         </div>
-      </main>
-
-      <footer className="h-8" />
-    </motion.div>
+      </div>
+    </div>
   );
 }
