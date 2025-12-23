@@ -29,3 +29,5 @@ export { DoorEnterIcon } from './DoorEnterIcon';
 export { CreateRoomIcon } from './CreateRoomIcon';
 export { LinkIcon } from './LinkIcon';
 export { CopyIcon } from './CopyIcon';
+export { SearchIcon } from './SearchIcon';
+export { RandomIcon } from './RandomIcon';

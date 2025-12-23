@@ -5,6 +5,7 @@ export { NumberStepper } from './NumberStepper';
 export { Input } from './Input';
 export { CategoryCard } from './CategoryCard';
 export { CategorySelector } from './CategorySelector';
+export { CategoryFilters } from './CategoryFilters';
 export { CategorySkeleton, CategorySkeletonGrid } from './CategorySkeleton';
 export { TimeSelector } from './TimeSelector';
 export { ToggleSwitch } from './ToggleSwitch';

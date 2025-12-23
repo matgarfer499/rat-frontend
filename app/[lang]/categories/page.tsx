@@ -6,10 +6,8 @@ import { motion } from 'framer-motion';
 import { fetchCategories } from '@lib/api';
 import { CategoryWithTranslations } from '@lib/types';
 import { useDictionary } from '@hooks/use-dictionary';
-import { LanguageSelector } from '@components/layout/LanguageSelector';
-import { StepIndicator, Card, CategoryCard, CategorySkeletonGrid } from '@components/ui';
-import { Button } from '@components/button';
-import { FolderIcon, ArrowLeftIcon, AlertIcon } from '@components/icons';
+import { ArrowLeftIcon, AlertIcon, PlayIcon } from '@components/icons';
+import { CategoryCard, CategoryFilters } from '@components/ui';
 
 export default function CategoriesPage() {
   const router = useRouter();
@@ -20,6 +18,8 @@ export default function CategoriesPage() {
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isRandomMode, setIsRandomMode] = useState(false);
 
   useEffect(() => {
     fetchCategories()
@@ -31,21 +31,9 @@ export default function CategoriesPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const toggleCategory = (categoryId: number) => {
-    setSelectedCategories((prev) =>
-      prev.includes(categoryId)
-        ? prev.filter((id) => id !== categoryId)
-        : [...prev, categoryId]
-    );
-  };
-
-  const getCategoryName = (category: CategoryWithTranslations): string => {
-    const translation = category.translations.find((t) => t.language === lang);
-    return translation?.name || category.key;
-  };
-
   const handleStartGame = () => {
-    if (selectedCategories.length === 0) {
+    // En modo aleatorio siempre hay categorías seleccionadas
+    if (!isRandomMode && selectedCategories.length === 0) {
       return;
     }
 
@@ -57,47 +45,91 @@ export default function CategoriesPage() {
     router.push(`/${lang}/setup`);
   };
 
-  const getSelectedText = (): string => {
-    if (!dict) return '';
-    const count = selectedCategories.length;
-    if (count === 0) return '';
-    if (count === 1) return dict.categories.selectedSingular;
-    return dict.categories.selectedPlural.replace('{count}', String(count));
+  const handleSelectAll = () => {
+    if (isRandomMode) return; // No permitir en modo aleatorio
+    
+    const allIds = filteredCategories.map((cat) => cat.id);
+    const allSelected = allIds.every((id) => selectedCategories.includes(id));
+    
+    if (allSelected) {
+      // Deseleccionar todo
+      setSelectedCategories([]);
+    } else {
+      // Seleccionar todo
+      setSelectedCategories(allIds);
+    }
   };
+
+  const handleRandomSelection = () => {
+    if (isRandomMode) {
+      // Desactivar modo aleatorio
+      setIsRandomMode(false);
+      setSelectedCategories([]);
+      return;
+    }
+    
+    const availableCategories = categories; // Usar todas, no filtradas
+    if (availableCategories.length === 0) return;
+    
+    // Select 3-5 random categories
+    const count = Math.min(
+      Math.floor(Math.random() * 3) + 3,
+      availableCategories.length
+    );
+    
+    const shuffled = [...availableCategories].sort(() => Math.random() - 0.5);
+    const randomIds = shuffled.slice(0, count).map((cat) => cat.id);
+    
+    // Activar modo aleatorio y seleccionar en secreto
+    setIsRandomMode(true);
+    setSelectedCategories(randomIds);
+    setSearchQuery(''); // Limpiar búsqueda
+  };
+
+  const toggleCategory = (categoryId: number) => {
+    if (isRandomMode) return; // No permitir cambios en modo aleatorio
+    
+    setSelectedCategories((prev) =>
+      prev.includes(categoryId)
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
+
+  // Filter categories based on search query
+  const filteredCategories = categories.filter((category) => {
+    const translation = category.translations.find((t) => t.language === lang);
+    const name = translation?.name || category.translations[0]?.name || '';
+    return name.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+  
+  // Check if all visible categories are selected
+  const allSelected = filteredCategories.length > 0 && 
+    filteredCategories.every((cat) => selectedCategories.includes(cat.id));
 
   if (!dict) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-purple-light text-xl animate-pulse" />
+        <div className="text-xl animate-pulse" />
       </div>
     );
   }
 
-  const steps = [
-    { label: dict.setup.stepSetup, isCompleted: true, isCurrent: false },
-    { label: dict.setup.stepCategories, isCompleted: false, isCurrent: true },
-  ];
-
   // Error state
   if (error) {
     return (
-      <div className="flex min-h-screen flex-col items-center px-4 py-6 sm:py-8">
-        <header className="w-full max-w-lg flex justify-end mb-6">
-          <LanguageSelector />
-        </header>
-
-        <main className="flex-1 flex flex-col items-center justify-center w-full max-w-lg">
-          <Card variant="solid" className="p-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-red-500/20 border border-red-500/40 flex items-center justify-center mx-auto mb-4">
-              <AlertIcon size={32} className="text-red-400" />
-            </div>
-            <h2 className="text-xl font-bold text-white mb-2">{dict.categories.error}</h2>
-            <p className="text-gray-muted mb-6">{dict.categories.errorRetry}</p>
-            <Button variant="primary" onClick={handleBack}>
-              {dict.common.back}
-            </Button>
-          </Card>
-        </main>
+      <div className="flex min-h-screen flex-col items-center justify-center px-4">
+        <div className="w-16 h-16 rounded-full bg-red-500/20 border border-red-500/40 flex items-center justify-center mb-4">
+          <AlertIcon size={32} className="text-red-400" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{dict.categories.error}</h2>
+        <p className="text-slate-500 dark:text-gray-400 mb-6">{dict.categories.errorRetry}</p>
+        <button
+          onClick={handleBack}
+          className="px-6 py-3 bg-primary hover:bg-blue-600 text-white rounded-full font-bold transition-all active:scale-95"
+        >
+          {dict.common.back}
+        </button>
       </div>
     );
   }
@@ -108,102 +140,100 @@ export default function CategoriesPage() {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="flex min-h-screen flex-col items-center px-4 py-6 sm:py-8"
+      className="relative flex min-h-screen w-full flex-col pb-32"
     >
-      {/* Header with language selector */}
-      <header className="w-full max-w-lg flex justify-end mb-6">
-        <LanguageSelector />
-      </header>
-
-      <main className="flex-1 flex flex-col w-full max-w-lg">
-        {/* Step indicator */}
-        <div className="mb-8">
-          <StepIndicator steps={steps} />
-        </div>
-
-        {/* Title section */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-full bg-purple-base/20 border border-purple-base/40 flex items-center justify-center">
-            <FolderIcon size={24} className="text-purple-light" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-white">{dict.categories.title}</h1>
-            <p className="text-sm text-gray-muted">{dict.categories.subtitle}</p>
-          </div>
-        </div>
-
-        {/* Categories grid */}
-        <Card variant="solid" className="p-4 flex-1">
-          {loading ? (
-            <CategorySkeletonGrid count={6} />
-          ) : categories.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-muted">{dict.categories.noCategories}</p>
-            </div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              className="grid grid-cols-2 gap-3"
-            >
-              {categories.map((category, index) => (
-                <motion.div
-                  key={category.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <CategoryCard
-                    name={getCategoryName(category)}
-                    isSelected={selectedCategories.includes(category.id)}
-                    onClick={() => toggleCategory(category.id)}
-                  />
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
-        </Card>
-
-        {/* Selected count */}
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{
-            opacity: selectedCategories.length > 0 ? 1 : 0,
-            height: selectedCategories.length > 0 ? 'auto' : 0,
-          }}
-          className="mt-4 text-center overflow-hidden"
+      {/* Top App Bar */}
+      <div className="sticky top-0 z-30 flex items-center justify-between p-4 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
+        <button
+          onClick={handleBack}
+          className="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
         >
-          <span className="text-purple-light font-medium">
-            {getSelectedText()}
-          </span>
-        </motion.div>
+          <ArrowLeftIcon size={24} />
+        </button>
+        <h2 className="text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-10">
+          {dict.categories.title}
+        </h2>
+      </div>
 
-        {/* Action buttons */}
-        <div className="flex gap-4 mt-6">
-          <Button
-            variant="ghost"
-            size="lg"
-            onClick={handleBack}
-            className="flex-1 flex items-center justify-center gap-2"
-          >
-            <ArrowLeftIcon size={20} />
-            {dict.common.back}
-          </Button>
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={handleStartGame}
-            disabled={selectedCategories.length === 0}
-            className="flex-1"
-          >
-            {dict.categories.continue}
-          </Button>
+      {/* Scrollable Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Headline Text */}
+        <div className="px-5 pt-2">
+          <h1 className="text-[28px] font-bold leading-tight tracking-tight mb-2">
+            {dict.categories.selectCategories}
+          </h1>
+          <p className="text-slate-500 dark:text-gray-400 text-base font-normal leading-normal">
+            {dict.categories.subtitle}
+          </p>
         </div>
-      </main>
 
-      {/* Footer spacer */}
-      <footer className="h-8" />
+        {/* Filters */}
+        <CategoryFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onSelectAll={handleSelectAll}
+          onRandomToggle={handleRandomSelection}
+          allSelected={allSelected}
+          isRandomMode={isRandomMode}
+          texts={{
+            searchPlaceholder: dict.categories.searchPlaceholder,
+            selectAll: dict.categories.selectAll,
+            random: dict.categories.random,
+            randomModeMessage: dict.categories.randomMode,
+          }}
+        />
+
+        {/* Category Grid */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-slate-500 dark:text-gray-400 text-lg animate-pulse">
+              {dict.categories.loading}
+            </div>
+          </div>
+        ) : filteredCategories.length === 0 ? (
+          <div className="flex items-center justify-center py-12 px-4">
+            <p className="text-slate-500 dark:text-gray-400 text-center">
+              {searchQuery
+                ? 'No se encontraron categorías'
+                : dict.categories.noCategories}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 px-4 mt-2">
+            {filteredCategories.map((category) => {
+              const translation = category.translations.find(
+                (t) => t.language === lang
+              );
+              const name =
+                translation?.name || category.translations[0]?.name || '';
+              const isSelected = isRandomMode ? false : selectedCategories.includes(category.id);
+
+              return (
+                <CategoryCard
+                  key={category.id}
+                  id={category.id}
+                  name={name}
+                  isSelected={isSelected}
+                  onToggle={() => toggleCategory(category.id)}
+                  disabled={isRandomMode}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Sticky Footer FAB */}
+      <div className="fixed bottom-0 left-0 w-full z-40 px-6 pb-6 pt-12 bg-gradient-to-t from-background-light dark:from-background-dark via-background-light/90 dark:via-background-dark/90 to-transparent pointer-events-none">
+        <button
+          onClick={handleStartGame}
+          disabled={!isRandomMode && selectedCategories.length === 0}
+          className="w-full h-14 bg-primary hover:bg-blue-600 text-white rounded-full font-bold text-lg shadow-xl shadow-primary/30 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed pointer-events-auto"
+        >
+          <span>{dict.categories.continue}</span>
+          <PlayIcon size={20} />
+        </button>
+      </div>
     </motion.div>
   );
 }
