@@ -5,24 +5,26 @@ import { useRouter, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Player } from '@lib/types';
 import { useDictionary } from '@hooks/use-dictionary';
-import { LanguageSelector } from '@components/layout/LanguageSelector';
-import { StepIndicator, NumberStepper, Input, Card, TimeSelector, ToggleSwitch } from '@components/ui';
-import { Button } from '@components/button';
-import { SettingsIcon, UserIcon, ArrowLeftIcon, ClockIcon, DetectiveIcon, JokerIcon, MaskIcon } from '@components/icons';
+import { PlayerCounter } from '@components/ui/PlayerCounter';
+import { PlayerInput } from '@components/ui/PlayerInput';
+import { RangeSlider } from '@components/ui/RangeSlider';
+import { RoleToggle } from '@components/ui/RoleToggle';
+import { ToggleCard } from '@components/ui/ToggleCard';
+import { ArrowLeftIcon, UsersIcon, ClockIcon, MaskIcon, DetectiveIcon, JokerIcon, PlayIcon } from '@components/icons';
 
 const MIN_PLAYERS = 3;
 const MAX_PLAYERS = 12;
 
 // Time constants (in seconds)
-const DEFAULT_VOTING_TIME = 60;
-const MIN_VOTING_TIME = 15;
-const MAX_VOTING_TIME = 180;
-const VOTING_TIME_STEP = 15;
+const DEFAULT_VOTING_TIME = 30;
+const MIN_VOTING_TIME = 10;
+const MAX_VOTING_TIME = 60;
+const VOTING_TIME_STEP = 5;
 
-const DEFAULT_DISCUSSION_TIME = 300; // 5 minutes
-const MIN_DISCUSSION_TIME = 60;
-const MAX_DISCUSSION_TIME = 600;
-const DISCUSSION_TIME_STEP = 30;
+const DEFAULT_DISCUSSION_TIME = 90;
+const MIN_DISCUSSION_TIME = 30;
+const MAX_DISCUSSION_TIME = 180;
+const DISCUSSION_TIME_STEP = 10;
 
 export default function SetupPage() {
   const router = useRouter();
@@ -134,7 +136,7 @@ export default function SetupPage() {
       name: name.trim(),
       hasSeenRole: false,
     }));
-
+    // TODO move logic to backend
     // Store in sessionStorage - use UI language as game language
     sessionStorage.setItem('gameLanguage', lang);
     sessionStorage.setItem('gamePlayers', JSON.stringify(players));
@@ -163,223 +165,160 @@ export default function SetupPage() {
     );
   }
 
-  const steps = [
-    { label: dict.setup.stepSetup, isCompleted: false, isCurrent: true },
-    { label: dict.setup.stepCategories, isCompleted: false, isCurrent: false },
-  ];
-
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="flex min-h-screen flex-col items-center px-4 py-6 sm:py-8"
+      className="relative flex min-h-screen w-full flex-col pb-32"
     >
-      {/* Header with language selector */}
-      <header className="w-full max-w-lg flex justify-end mb-6">
-        <LanguageSelector />
-      </header>
+      {/* Top App Bar */}
+      <div className="sticky top-0 z-50 flex items-center bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md p-4 pb-2 justify-between border-b border-gray-200 dark:border-gray-800">
+        <button 
+          onClick={handleBack}
+          className="text-slate-900 dark:text-white flex size-12 shrink-0 items-center justify-center rounded-full active:bg-gray-200 dark:active:bg-gray-800 transition-colors"
+        >
+          <ArrowLeftIcon size={24} />
+        </button>
+        <h2 className="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-12">
+          {dict.setup.title}
+        </h2>
+      </div>
 
-      <main className="flex-1 flex flex-col w-full max-w-lg">
-        {/* Step indicator */}
-        <div className="mb-8">
-          <StepIndicator steps={steps} />
-        </div>
+      {/* Section: Player Count */}
+      <PlayerCounter
+        value={playerCount}
+        min={MIN_PLAYERS}
+        max={MAX_PLAYERS}
+        onChange={handlePlayerCountChange}
+        label={dict.setup.numberOfPlayers}
+      />
 
-        {/* Title section */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-12 h-12 rounded-full bg-purple-base/20 border border-purple-base/40 flex items-center justify-center">
-            <SettingsIcon size={24} className="text-purple-light" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-white">{dict.setup.title}</h1>
-            <p className="text-sm text-gray-muted">{dict.setup.subtitle}</p>
-          </div>
-        </div>
+      {/* Section: Player List */}
+      <div className="px-4 pb-8">
+        <h3 className="text-slate-900 dark:text-white text-xl font-bold leading-tight mb-4 flex items-center gap-2">
+          <UsersIcon size={24} className="text-primary" />
+          {dict.setup.playersNames}
+        </h3>
+        
+        {/* General error message */}
+        {generalError && (
+          <p className="text-sm text-red-400 mb-4 text-center">{generalError}</p>
+        )}
 
-        {/* Form card */}
-        <Card variant="solid" className="p-6 space-y-8">
-          {/* Number of players */}
-          <div>
-            <h2 className="text-lg font-semibold text-white mb-4 text-center">
-              {dict.setup.numberOfPlayers}
-            </h2>
-            <NumberStepper
-              value={playerCount}
-              min={MIN_PLAYERS}
-              max={MAX_PLAYERS}
-              onChange={handlePlayerCountChange}
+        <div className="flex flex-col gap-3">
+          {playerNames.map((name, index) => (
+            <PlayerInput
+              key={index}
+              value={name}
+              onChange={(value) => handlePlayerNameChange(index, value)}
+              placeholder={dict.setup.playerPlaceholder.replace('{number}', String(index + 1))}
+              colorIndex={index}
+              error={errors[index]}
             />
-          </div>
-
-          {/* Divider */}
-          <div className="h-px bg-purple-base/30" />
-
-          {/* Player names */}
-          <div>
-            <h2 className="text-lg font-semibold text-white mb-4">
-              {dict.setup.playersNames}
-            </h2>
-            
-            {/* General error message */}
-            {generalError && (
-              <p className="text-sm text-red-400 mb-4 text-center">{generalError}</p>
-            )}
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              {playerNames.map((name, index) => (
-                <Input
-                  key={index}
-                  type="text"
-                  placeholder={dict.setup.playerPlaceholder.replace('{number}', String(index + 1))}
-                  value={name}
-                  onChange={(e) => handlePlayerNameChange(index, e.target.value)}
-                  icon={<UserIcon size={18} />}
-                  error={errors[index]}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="h-px bg-purple-base/30" />
-
-          {/* Game Rules */}
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <ClockIcon size={20} className="text-purple-light" />
-              <h2 className="text-lg font-semibold text-white">
-                {dict.setup.gameRules}
-              </h2>
-            </div>
-
-            <div className="space-y-5">
-              {/* Voting time */}
-              <TimeSelector
-                value={votingTime}
-                onChange={setVotingTime}
-                min={MIN_VOTING_TIME}
-                max={MAX_VOTING_TIME}
-                step={VOTING_TIME_STEP}
-                label={dict.setup.votingTime}
-              />
-
-              {/* Discussion timer toggle */}
-              <div className="space-y-3">
-                <ToggleSwitch
-                  checked={discussionTimerEnabled}
-                  onChange={setDiscussionTimerEnabled}
-                  label={dict.setup.enableDiscussionTimer}
-                  description={dict.setup.enableDiscussionTimerDesc}
-                />
-                
-                {/* Discussion time (only if enabled) */}
-                <motion.div
-                  initial={false}
-                  animate={{ 
-                    height: discussionTimerEnabled ? 'auto' : 0,
-                    opacity: discussionTimerEnabled ? 1 : 0,
-                  }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden"
-                >
-                  <div className="pt-2">
-                    <TimeSelector
-                      value={discussionTime}
-                      onChange={setDiscussionTime}
-                      min={MIN_DISCUSSION_TIME}
-                      max={MAX_DISCUSSION_TIME}
-                      step={DISCUSSION_TIME_STEP}
-                      label={dict.setup.discussionTime}
-                      disabled={!discussionTimerEnabled}
-                    />
-                  </div>
-                </motion.div>
-              </div>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="h-px bg-purple-base/30" />
-
-          {/* Special Roles */}
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <MaskIcon size={20} className="text-purple-light" />
-              <h2 className="text-lg font-semibold text-white">
-                {dict.setup.specialRoles}
-              </h2>
-            </div>
-
-            <div className="space-y-4">
-              {/* Detective role */}
-              <div className="p-4 rounded-xl bg-purple-darker/50 border border-purple-base/20">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-500/20 border border-blue-500/40 
-                                  flex items-center justify-center flex-shrink-0 mt-1">
-                    <DetectiveIcon size={20} className="text-blue-400" />
-                  </div>
-                  <div className="flex-1">
-                    <ToggleSwitch
-                      checked={detectiveEnabled}
-                      onChange={setDetectiveEnabled}
-                      label={dict.setup.detectiveRole}
-                    />
-                    <p className="text-gray-muted text-xs mt-1">
-                      {dict.setup.detectiveDesc}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Joker role */}
-              <div className="p-4 rounded-xl bg-purple-darker/50 border border-purple-base/20">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-yellow-500/20 border border-yellow-500/40 
-                                  flex items-center justify-center flex-shrink-0 mt-1">
-                    <JokerIcon size={20} className="text-yellow-400" />
-                  </div>
-                  <div className="flex-1">
-                    <ToggleSwitch
-                      checked={jokerEnabled}
-                      onChange={setJokerEnabled}
-                      label={dict.setup.jokerRole}
-                    />
-                    <p className="text-gray-muted text-xs mt-1">
-                      {dict.setup.jokerDesc}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Action buttons */}
-        <div className="flex gap-4 mt-8">
-          <Button
-            variant="ghost"
-            size="lg"
-            onClick={handleBack}
-            className="flex-1 flex items-center justify-center gap-2"
-          >
-            <ArrowLeftIcon size={20} />
-            {dict.common.back}
-          </Button>
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={handleContinue}
-            className="flex-1"
-          >
-            {dict.setup.continue}
-          </Button>
+          ))}
         </div>
-      </main>
+      </div>
 
-      {/* Footer spacer */}
-      <footer className="h-8" />
+      {/* Divider */}
+      <div className="h-px bg-gray-200 dark:bg-gray-800 mx-4 mb-8" />
+
+      {/* Section: Timers */}
+      <div className="px-4 pb-8">
+        <h3 className="text-slate-900 dark:text-white text-xl font-bold leading-tight mb-6 flex items-center gap-2">
+          <ClockIcon size={24} className="text-primary" />
+          {dict.setup.gameRules}
+        </h3>
+
+        <div className="space-y-5">
+          {/* Discussion timer toggle */}
+          <div className="space-y-3">
+            <ToggleCard
+              checked={discussionTimerEnabled}
+              onChange={setDiscussionTimerEnabled}
+              label={dict.setup.enableDiscussionTimer}
+              description={dict.setup.enableDiscussionTimerDesc}
+            />
+            
+            {/* Discussion time (only if enabled) */}
+            <motion.div
+              initial={false}
+              animate={{ 
+                height: discussionTimerEnabled ? 'auto' : 0,
+                opacity: discussionTimerEnabled ? 1 : 0,
+              }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              {discussionTimerEnabled && (
+                <RangeSlider
+                  value={discussionTime}
+                  onChange={setDiscussionTime}
+                  min={MIN_DISCUSSION_TIME}
+                  max={MAX_DISCUSSION_TIME}
+                  step={DISCUSSION_TIME_STEP}
+                  label={dict.setup.discussionTime}
+                />
+              )}
+            </motion.div>
+          </div>
+
+          {/* Voting time */}
+          <RangeSlider
+            value={votingTime}
+            onChange={setVotingTime}
+            min={MIN_VOTING_TIME}
+            max={MAX_VOTING_TIME}
+            step={VOTING_TIME_STEP}
+            label={dict.setup.votingTime}
+          />
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="h-px bg-gray-200 dark:bg-gray-800 mx-4 mb-8" />
+
+      {/* Section: Roles */}
+      <div className="px-4 pb-4">
+        <h3 className="text-slate-900 dark:text-white text-xl font-bold leading-tight mb-4 flex items-center gap-2">
+          <MaskIcon size={24} className="text-primary" />
+          {dict.setup.specialRoles}
+        </h3>
+
+        <div className="grid grid-cols-1 gap-3">
+          {/* Detective role */}
+          <RoleToggle
+            checked={detectiveEnabled}
+            onChange={setDetectiveEnabled}
+            label={dict.setup.detectiveRole}
+            description={dict.setup.detectiveDesc}
+            icon={<DetectiveIcon size={24} />}
+            iconColor="blue"
+          />
+
+          {/* Joker role */}
+          <RoleToggle
+            checked={jokerEnabled}
+            onChange={setJokerEnabled}
+            label={dict.setup.jokerRole}
+            description={dict.setup.jokerDesc}
+            icon={<JokerIcon size={24} />}
+            iconColor="yellow"
+          />
+        </div>
+      </div>
+
+      {/* Sticky Footer */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background-light via-background-light to-transparent dark:from-background-dark dark:via-background-dark pt-12 z-40">
+        <button 
+          onClick={handleContinue}
+          className="w-full rounded-full bg-primary py-4 text-white text-lg font-bold shadow-xl shadow-primary/40 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+        >
+          <span>{dict.setup.continue}</span>
+          <PlayIcon size={20} />
+        </button>
+      </div>
     </motion.div>
   );
 }

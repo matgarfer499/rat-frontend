@@ -14,19 +14,11 @@ export function JokerIcon({ size = 24, className = '' }: IconProps) {
       strokeLinejoin="round"
       className={className}
     >
-      {/* Jester hat shape */}
-      <path d="M12 2C9 2 7 4 7 6c0 1.5.5 2.5 1.5 3.5" />
-      <path d="M12 2c3 0 5 2 5 4 0 1.5-.5 2.5-1.5 3.5" />
-      {/* Bells */}
-      <circle cx="6" cy="8" r="2" />
-      <circle cx="18" cy="8" r="2" />
-      {/* Face */}
-      <circle cx="12" cy="14" r="6" />
-      {/* Smile */}
-      <path d="M9 16c.5 1 1.5 1.5 3 1.5s2.5-.5 3-1.5" />
-      {/* Eyes */}
-      <path d="M9 13v.01" />
-      <path d="M15 13v.01" />
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <path d="M5 16m0 1.5a1.5 1.5 0 0 1 1.5 -1.5h11a1.5 1.5 0 0 1 1.5 1.5v0a1.5 1.5 0 0 1 -1.5 1.5h-11a1.5 1.5 0 0 1 -1.5 -1.5z" />
+      <path d="M12 16q -2.5 -8 -6 -8q -2.5 0 -3 2c2.953 .31 3.308 3.33 4 6" />
+      <path d="M12 16q 2.5 -8 6 -8q 2.5 0 3 2c-2.953 .31 -3.308 3.33 -4 6" />
+      <path d="M9 9.5q 2 -3.5 3 -3.5t 3 3.5" />
     </svg>
   );
 }

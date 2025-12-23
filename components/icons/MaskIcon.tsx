@@ -14,12 +14,15 @@ export function MaskIcon({ size = 24, className = '' }: IconProps) {
       strokeLinejoin="round"
       className={className}
     >
-      <path d="M12 3C7 3 3 7 3 12c0 3.5 2 6.5 5 8" />
-      <path d="M21 12c0-5-4-9-9-9" />
-      <path d="M16 20c3-1.5 5-4.5 5-8" />
-      <circle cx="9" cy="10" r="1.5" fill="currentColor" />
-      <circle cx="15" cy="10" r="1.5" fill="currentColor" />
-      <path d="M9 16c.85.63 1.885 1 3 1s2.15-.37 3-1" />
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <path d="M13.192 9h6.616a2 2 0 0 1 1.992 2.183l-.567 6.182a4 4 0 0 1 -3.983 3.635h-1.5a4 4 0 0 1 -3.983 -3.635l-.567 -6.182a2 2 0 0 1 1.992 -2.183z" />
+      <path d="M15 13h.01" />
+      <path d="M18 13h.01" />
+      <path d="M15 16.5c1 .667 2 .667 3 0" />
+      <path d="M8.632 15.982a4.037 4.037 0 0 1 -.382 .018h-1.5a4 4 0 0 1 -3.983 -3.635l-.567 -6.182a2 2 0 0 1 1.992 -2.183h6.616a2 2 0 0 1 2 2" />
+      <path d="M6 8h.01" />
+      <path d="M9 8h.01" />
+      <path d="M6 12c.764 -.51 1.528 -.63 2.291 -.36" />
     </svg>
   );
 }

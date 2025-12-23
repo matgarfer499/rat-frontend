@@ -5,6 +5,7 @@ export { DeviceIcon } from './DeviceIcon';
 export { RatIcon } from './RatIcon';
 export { SettingsIcon } from './SettingsIcon';
 export { UserIcon } from './UserIcon';
+export { SmartphoneIcon } from './SmartphoneIcon';
 export { MinusIcon } from './MinusIcon';
 export { PlusIcon } from './PlusIcon';
 export { ArrowLeftIcon } from './ArrowLeftIcon';
