@@ -11,17 +11,21 @@
   --cyan-glow: #22d3ee;
   --yellow-glow: #facc15;
   --yellow-bright: #fde047;
+  --primary-red: #d91e41;
   --white: #f8fafc;
   --gray-muted: #94a3b8;
   --gray-dark: #475569;
+  --background-light: #f5f6f8;
+  --background-dark: #101622;
+  --surface-dark: #1a2233;
   
   /* Semánticos */
-  --background: var(--purple-dark);
+  --background: var(--background-dark);
   --background-card: rgba(124, 58, 237, 0.1);
   --foreground: var(--white);
   --foreground-muted: var(--gray-muted);
-  --primary: var(--purple-base);
-  --primary-hover: var(--purple-light);
+  --primary: var(--primary-red);
+  --primary-hover: #e63355;
   --accent: var(--cyan-accent);
   --highlight: var(--yellow-glow);
   
@@ -35,6 +39,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-background-light: var(--background-light);
+  --color-background-dark: var(--background-dark);
+  --color-surface-dark: var(--surface-dark);
+  --color-primary: var(--primary);
   --color-purple-dark: var(--purple-dark);
   --color-purple-deeper: var(--purple-deeper);
   --color-purple-base: var(--purple-base);
@@ -51,7 +59,7 @@
 }
 
 body {
-  background: linear-gradient(135deg, var(--purple-deeper) 0%, var(--purple-dark) 50%, #0f0524 100%);
+  background: var(--background-dark);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   min-height: 100vh;
@@ -80,4 +88,97 @@ body {
 
 .text-glow-yellow {
   text-shadow: 0 0 10px rgba(250, 204, 21, 0.7), 0 0 20px rgba(250, 204, 21, 0.5);
+}
+
+/* View Transitions API */
+@supports (view-transition-name: none) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.3s;
+    animation-timing-function: ease-in-out;
+  }
+  
+  ::view-transition-old(root) {
+    animation-name: fade-out;
+  }
+  
+  ::view-transition-new(root) {
+    animation-name: fade-in;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Custom range slider styling */
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  background: transparent;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  margin-top: -8px; 
+  box-shadow: 0 0 0 4px rgba(217, 30, 65, 0.2);
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 4px;
+  cursor: pointer;
+  background: #314368;
+  border-radius: 2px;
+}
+
+input[type=range]:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 8px rgba(217, 30, 65, 0.3);
+}
+
+input[type=range]::-moz-range-thumb {
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 0 4px rgba(217, 30, 65, 0.2);
+}
+
+input[type=range]::-moz-range-track {
+  width: 100%;
+  height: 4px;
+  cursor: pointer;
+  background: #314368;
+  border-radius: 2px;
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
