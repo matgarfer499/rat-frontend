@@ -1,9 +1,9 @@
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
-import { LanguageSelector } from '@components/layout/LanguageSelector';
-import { GameModeCard } from '@components/ui/GameModeCard';
-import { DeviceIcon, UsersIcon, RatIcon } from '@components/icons';
+import { Header } from '@components/layout/Header';
+import { ActionButton } from '@components/ui/ActionButton';
+import { GlobeIcon, RatIcon, SmartphoneIcon } from '@components/icons';
 import { useDictionary } from '@hooks/use-dictionary';
 
 export default function Home() {
@@ -23,58 +23,65 @@ export default function Home() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center px-4 py-6 sm:py-8">
-      {/* Header with language selector */}
-      <header className="w-full max-w-md flex justify-end mb-8">
-        <LanguageSelector />
-      </header>
+    <div className="relative flex h-screen w-full flex-col overflow-hidden">
+      {/* Background effects */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0" 
+        style={{
+          backgroundImage: "url('data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')"
+        }} 
+      />
+      <div className="fixed bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-background-dark via-background-dark/90 to-transparent z-0 pointer-events-none" />
 
-      {/* Title section */}
-      <main className="flex-1 flex flex-col items-center justify-center w-full max-w-md">
-        {/* Rat logo/icon */}
-        <div className="mb-4">
-          <div className="w-20 h-20 rounded-full bg-purple-base/20 border-2 border-purple-base/40 flex items-center justify-center shadow-[0_0_30px_rgba(168,85,247,0.3)]">
-            <RatIcon size={48} className="text-purple-light" />
+      {/* Header */}
+      <Header />
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col items-center justify-center relative z-10 -mt-10">
+        {/* Rat logo with glow effect */}
+        <div className="relative w-full max-w-[320px] aspect-square mb-6 flex items-center justify-center">
+          <div className="absolute inset-0 bg-primary/20 blur-[80px] rounded-full" />
+          <div className="relative w-64 h-64 flex items-center justify-center">
+            <RatIcon size={180} className="text-primary/80 drop-shadow-[0_0_15px_rgba(217,30,65,0.5)]" />
           </div>
         </div>
 
-        {/* R.A.T. Title */}
-        <h1 className="text-5xl sm:text-6xl font-black text-white tracking-wider text-glow-purple mb-2">
-          R<span className="text-purple-light">.</span>A<span className="text-purple-light">.</span>T<span className="text-purple-light">.</span>
-        </h1>
-
-        {/* Subtitle */}
-        <p className="text-gray-muted text-lg sm:text-xl font-medium tracking-wide mb-2">
-          {dict.lobby.subtitle}
-        </p>
-
-        {/* Tagline */}
-        <p className="text-cyan-accent text-sm sm:text-base mb-12 text-glow-cyan">
-          {dict.lobby.tagline}
-        </p>
-
-        {/* Game mode cards */}
-        <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <GameModeCard
-            title={dict.lobby.localGame}
-            description={dict.lobby.localGameDesc}
-            icon={<DeviceIcon size={32} />}
-            onClick={() => router.push(`/${lang}/setup`)}
-            accentColor="purple"
-          />
-
-          <GameModeCard
-            title={dict.lobby.multiplayerGame}
-            description={dict.lobby.multiplayerGameDesc}
-            icon={<UsersIcon size={32} />}
-            onClick={() => router.push(`/${lang}/multiplayer`)}
-            accentColor="cyan"
-          />
+        {/* Title section */}
+        <div className="flex flex-col items-center gap-2 mb-8 px-6 text-center">
+          <h1 className="text-white text-5xl md:text-6xl font-black tracking-tight leading-none drop-shadow-lg italic">
+            R.A.T.
+          </h1>
+          <p className="text-white/90 text-lg font-bold tracking-widest uppercase">
+            {dict.lobby.subtitle}
+          </p>
+          <p className="text-slate-500 text-xs md:text-sm font-medium mt-2 opacity-60">
+            {dict.lobby.tagline.toUpperCase()}
+          </p>
         </div>
-      </main>
 
-      {/* Footer spacer */}
-      <footer className="h-8 sm:h-12" />
+        {/* Action buttons */}
+        <div className="flex flex-col gap-4 w-full max-w-[320px] px-6">
+          <ActionButton
+            onClick={() => router.push(`/${lang}/multiplayer`)}
+            variant="primary"
+            icon={<GlobeIcon size={20} />}
+          >
+            {dict.lobby.multiplayerGame}
+          </ActionButton>
+
+          <ActionButton
+            onClick={() => router.push(`/${lang}/setup`)}
+            variant="secondary"
+            icon={<SmartphoneIcon size={20} />}
+          >
+            {dict.lobby.localGame}
+          </ActionButton>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="py-6 text-center z-10">
+        <p className="text-slate-600 text-xs font-medium">v1.0.0 • Matías José García Fernández</p>
+      </div>
     </div>
   );
 }
