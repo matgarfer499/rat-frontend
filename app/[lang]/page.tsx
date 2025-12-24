@@ -40,8 +40,8 @@ export default function Home() {
         {/* Rat logo with glow effect */}
         <div className="relative w-full max-w-[320px] aspect-square mb-6 flex items-center justify-center">
           <div className="absolute inset-0 bg-primary/20 blur-[80px] rounded-full" />
-          <div className="relative w-64 h-64 flex items-center justify-center">
-            <RatIcon size={180} className="text-primary/80 drop-shadow-[0_0_15px_rgba(217,30,65,0.5)]" />
+          <div className="relative w-64 h-64 flex items-center justify-center scale-110">
+            <RatIcon size={550} className="scale-110" />
           </div>
         </div>
 
