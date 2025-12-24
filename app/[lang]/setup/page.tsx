@@ -11,6 +11,7 @@ import { RangeSlider } from '@components/ui/RangeSlider';
 import { RoleToggle } from '@components/ui/RoleToggle';
 import { ToggleCard } from '@components/ui/ToggleCard';
 import { ArrowLeftIcon, UsersIcon, ClockIcon, MaskIcon, DetectiveIcon, JokerIcon, PlayIcon } from '@components/icons';
+import { ActionButton } from '@components/ui/ActionButton';
 
 const MIN_PLAYERS = 3;
 const MAX_PLAYERS = 12;
@@ -311,13 +312,13 @@ export default function SetupPage() {
 
       {/* Sticky Footer */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background-light via-background-light to-transparent dark:from-background-dark dark:via-background-dark pt-12 z-40">
-        <button 
+        <ActionButton
           onClick={handleContinue}
-          className="w-full rounded-full bg-primary py-4 text-white text-lg font-bold shadow-xl shadow-primary/40 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+          variant="primary"
+          icon={<PlayIcon size={20} />}
         >
-          <span>{dict.setup.continue}</span>
-          <PlayIcon size={20} />
-        </button>
+          {dict.setup.continue}
+        </ActionButton>
       </div>
     </motion.div>
   );

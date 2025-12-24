@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { RefreshIcon, HomeIcon, UserIcon, DetectiveIcon, JokerIcon, MaskIcon } from '@components/icons';
 import { Player } from '@lib/types';
+import { ActionButton } from '@components/ui/ActionButton';
 
 interface RevealPhaseProps {
   players: Player[];
@@ -87,7 +88,7 @@ export function RevealPhase({
     if (playerId === impostorId) return 'text-red-500';
     if (playerId === detectiveId) return 'text-blue-500';
     if (playerId === jokerId) return 'text-orange-500';
-    return 'text-primary';
+    return 'text-secondary';
   };
 
   const getRoleIcon = (playerId: string) => {
@@ -149,7 +150,9 @@ export function RevealPhase({
         {/* Roles Header */}
         <h3 className="text-white text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-4 
                       flex items-center gap-2">
-          <span className="text-primary text-2xl">🎭</span>
+          <span className="text-primary text-2xl">
+            <MaskIcon></MaskIcon>
+          </span>
           {dict.rolesRevealed}
         </h3>
 
@@ -193,27 +196,20 @@ export function RevealPhase({
       <div className="fixed bottom-0 left-0 w-full p-4 bg-background-light/90 
                      dark:bg-background-dark/90 backdrop-blur-md border-t border-[#e5e7eb] 
                      dark:border-[#314368] flex flex-col gap-3 z-20">
-        <button
+        <ActionButton
           onClick={onPlayAgain}
-          className="flex items-center justify-center w-full h-12 gap-2 rounded-full 
-                   bg-primary hover:bg-primary/90 transition-colors active:scale-[0.98]"
+          variant="primary"
+          icon={<RefreshIcon size={20} />}
         >
-          <RefreshIcon size={20} className="text-white" />
-          <span className="text-white text-base font-bold tracking-tight">
-            {dict.playAgainSamePlayers}
-          </span>
-        </button>
-        <button
+          {dict.playAgainSamePlayers}
+        </ActionButton>
+        <ActionButton
           onClick={onBackToLobby}
-          className="flex items-center justify-center w-full h-12 gap-2 rounded-full 
-                   bg-transparent hover:bg-[#111418]/5 dark:hover:bg-white/5 transition-colors 
-                   border border-[#e5e7eb] dark:border-[#314368] text-[#111418] dark:text-white"
+          variant="secondary"
+          icon={<HomeIcon size={20} />}
         >
-          <HomeIcon size={20} />
-          <span className="text-base font-bold tracking-tight">
-            {dict.backToLobby}
-          </span>
-        </button>
+          {dict.backToLobby}
+        </ActionButton>
       </div>
     </motion.div>
   );

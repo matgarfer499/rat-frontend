@@ -27,9 +27,18 @@ export function ActionButton({
     secondary: 'text-white/90',
   };
 
+  const isDisabled = className.includes('cursor-not-allowed');
+
+  const handleClick = () => {
+    if (!isDisabled) {
+      onClick();
+    }
+  };
+
   return (
     <button 
-      onClick={onClick}
+      onClick={handleClick}
+      disabled={isDisabled}
       className={`relative group w-full h-14 rounded-full overflow-hidden transition-all active:scale-[0.98] ${variantStyles[variant]} ${className}`}
     >
       <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { UserIcon, ClockIcon, CheckIcon } from '@components/icons';
+import { ActionButton } from '@components/ui/ActionButton';
 import { Player } from '@lib/types';
 import { formatTime } from '@lib/game-utils';
 
@@ -30,8 +31,7 @@ export function VotingPhase({
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const { minutes, seconds } = formatTime(remainingTime);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleConfirmVote = () => {
     onConfirmVote(selectedPlayerId);
   };
 
@@ -75,7 +75,7 @@ export function VotingPhase({
         </div>
 
         {/* Voting Form */}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3 px-4">
+        <div className="flex flex-col gap-3 px-4">
           {players.map((player, index) => (
             <label
               key={player.id}
@@ -126,26 +126,21 @@ export function VotingPhase({
               </div>
             </label>
           ))}
-        </form>
+        </div>
       </div>
 
       {/* Bottom Action Bar (Sticky) */}
       <div className="absolute bottom-0 left-0 right-0 z-20 
                      bg-gradient-to-t from-background-dark via-background-dark to-transparent 
                      pt-12 pb-6 px-6">
-        <button
-          type="submit"
-          onClick={handleSubmit}
-          disabled={!selectedPlayerId}
-          className="w-full h-12 flex items-center justify-center gap-2 rounded-full bg-primary 
-                   text-center text-base font-bold text-white 
-                   shadow-[0_4px_20px_rgba(13,89,242,0.4)] active:scale-[0.98] 
-                   transition-all hover:bg-blue-600 hover:shadow-[0_8px_25px_rgba(13,89,242,0.5)]
-                   disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+        <ActionButton
+          onClick={handleConfirmVote}
+          variant="primary"
+          icon={<CheckIcon size={20} />}
+          className={!selectedPlayerId ? 'opacity-50 cursor-not-allowed' : ''}
         >
-          <CheckIcon size={20} />
           {dict.confirmVote}
-        </button>
+        </ActionButton>
       </div>
     </motion.div>
   );

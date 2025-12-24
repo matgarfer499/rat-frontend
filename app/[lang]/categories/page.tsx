@@ -7,7 +7,7 @@ import { fetchCategories } from '@lib/api';
 import { CategoryWithTranslations } from '@lib/types';
 import { useDictionary } from '@hooks/use-dictionary';
 import { ArrowLeftIcon, AlertIcon, PlayIcon } from '@components/icons';
-import { CategoryCard, CategoryFilters } from '@components/ui';
+import { CategoryCard, CategoryFilters, ActionButton } from '@components/ui';
 
 export default function CategoriesPage() {
   const router = useRouter();
@@ -225,14 +225,16 @@ export default function CategoriesPage() {
 
       {/* Sticky Footer FAB */}
       <div className="fixed bottom-0 left-0 w-full z-40 px-6 pb-6 pt-12 bg-gradient-to-t from-background-light dark:from-background-dark via-background-light/90 dark:via-background-dark/90 to-transparent pointer-events-none">
-        <button
-          onClick={handleStartGame}
-          disabled={!isRandomMode && selectedCategories.length === 0}
-          className="w-full h-14 bg-primary hover:bg-blue-600 text-white rounded-full font-bold text-lg shadow-xl shadow-primary/30 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed pointer-events-auto"
-        >
-          <span>{dict.categories.continue}</span>
-          <PlayIcon size={20} />
-        </button>
+        <div className="pointer-events-auto">
+          <ActionButton
+            onClick={handleStartGame}
+            variant="primary"
+            icon={<PlayIcon size={20} />}
+            className={!isRandomMode && selectedCategories.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}
+          >
+            {dict.categories.continue}
+          </ActionButton>
+        </div>
       </div>
     </motion.div>
   );

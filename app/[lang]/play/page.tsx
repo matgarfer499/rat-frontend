@@ -8,6 +8,7 @@ import { useDictionary } from '@hooks/use-dictionary';
 import { useCountdown } from '@hooks/use-countdown';
 import { DiscussionTimer, PlayerCard, VotingPhase, RevealPhase } from '@components/game';
 import { PlayIcon } from '@components/icons';
+import { ActionButton } from '@components/ui/ActionButton';
 
 type GamePhase = 'discussion' | 'voting' | 'reveal';
 
@@ -219,21 +220,13 @@ export default function PlayPage() {
       {/* Footer / Action Button - Only for discussion phase */}
       {phase === 'discussion' && (
         <footer className="relative z-10 p-6 pb-8 w-full max-w-md mx-auto">
-          <button
+          <ActionButton
             onClick={handleStartVoting}
-            className="group relative flex w-full cursor-pointer items-center justify-center 
-                       overflow-hidden rounded-xl bg-primary h-14 text-white gap-3 text-lg 
-                       font-bold tracking-[0.015em] shadow-[0_0_20px_rgba(13,89,242,0.3)] 
-                       transition-all hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(13,89,242,0.5)] 
-                       active:scale-[0.98]"
+            variant="primary"
+            icon={<PlayIcon size={24} />}
           >
-            <span className="absolute inset-0 bg-white/20 translate-y-full 
-                             group-hover:translate-y-0 transition-transform duration-300 ease-out" />
-            <span className="relative flex items-center gap-2 uppercase">
-              <PlayIcon size={24} />
-              {dict.play.startVoting}
-            </span>
-          </button>
+            {dict.play.startVoting}
+          </ActionButton>
         </footer>
       )}
 

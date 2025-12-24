@@ -8,6 +8,7 @@ import { useDictionary } from '@hooks/use-dictionary';
 import { RevealCard, RevealedContent } from '@components/game';
 import { ArrowLeftIcon, ArrowRightIcon } from '@components/icons';
 import { PlayerBadge } from '@components/ui';
+import { ActionButton } from '@components/ui/ActionButton';
 
 export default function RevealPage() {
   const router = useRouter();
@@ -240,14 +241,14 @@ export default function RevealPage() {
           <p className="text-[#90a4cb] text-sm font-normal leading-relaxed text-center px-4">
             Memoriza tu palabra. Al soltar la tarjeta, la información se ocultará de nuevo automáticamente por seguridad.
           </p>
-          <button
+          <ActionButton
             onClick={handleNext}
-            className="w-full bg-primary hover:bg-primary-dark active:scale-[0.98] transition-all duration-200 text-white font-bold text-base h-14 rounded-xl shadow-[0_0_20px_rgba(59,130,246,0.4)] flex items-center justify-center gap-3 group/btn relative overflow-hidden"
+            variant="primary"
+            icon={<ArrowRightIcon size={20} />}
+            className={!hasRevealed ? 'opacity-50 cursor-not-allowed' : ''}
           >
-            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300"></div>
-            <span className="relative z-10">{isLastPlayer ? dict.reveal.startGame : dict.reveal.confirmAndPass}</span>
-            <ArrowRightIcon size={20} className="relative z-10 group-hover/btn:translate-x-1 transition-transform" />
-          </button>
+            {isLastPlayer ? dict.reveal.startGame : dict.reveal.confirmAndPass}
+          </ActionButton>
         </div>
       </div>
     </div>
