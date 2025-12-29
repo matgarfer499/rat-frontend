@@ -7,7 +7,7 @@ import { apiFetch, getApiHeaders, API_BASE_URL } from './fetch-helper';
 
 export interface CreateRoomRequest {
   username: string;
-  category_id: number;
+  category_ids?: number[];
   max_players?: number;
   is_public?: boolean;
   password?: string;
@@ -27,7 +27,7 @@ export interface PublicRoom {
   id: string;
   player_count: number;
   max_players: number;
-  category_id: number;
+  category_ids: number[];
 }
 
 export interface JoinRoomRequest {
@@ -50,7 +50,7 @@ export interface CheckRoomResponse {
   player_count: number;
   max_players: number;
   phase: string;
-  category_id: number;
+  category_ids: number[];
 }
 
 /**

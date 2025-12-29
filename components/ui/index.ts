@@ -16,3 +16,4 @@ export { PlayerInput } from './PlayerInput';
 export { PlayerBadge } from './PlayerBadge';
 export { RangeSlider } from './RangeSlider';
 export { RoleToggle } from './RoleToggle';
+export { CollapsibleSection } from './CollapsibleSection';

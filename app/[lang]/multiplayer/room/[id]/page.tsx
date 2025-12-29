@@ -4,27 +4,21 @@ import { useRouter, useParams } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@components/button';
-import { Card, TimeSelector, ToggleSwitch } from '@components/ui';
-import { LanguageSelector } from '@components/layout/LanguageSelector';
+import { Card } from '@components/ui';
 import { useDictionary } from '@hooks/use-dictionary';
 import { useSocket } from '@hooks/use-socket';
 import { getRoom, getCategories } from '@lib/rooms-api';
+import { LobbyContent } from '@components/multiplayer/LobbyContent';
 import type { Room, Player } from '@/types/room';
 import {
   ArrowLeftIcon,
   UsersIcon,
   UserIcon,
-  SettingsIcon,
-  PlayIcon,
   CheckIcon,
-  ClockIcon,
   DetectiveIcon,
   JokerIcon,
   MaskIcon,
-  FolderIcon,
   RefreshIcon,
-  LinkIcon,
-  CopyIcon,
 } from '@components/icons';
 
 interface Category {
@@ -68,7 +62,7 @@ export default function GameRoomPage() {
   
   // Categories
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<number>(1);
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([1]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   
   // Host settings (only for host)
@@ -114,7 +108,7 @@ export default function GameRoomPage() {
         setRoom(roomData);
         setCategories(categoriesData);
         if (categoriesData.length > 0) {
-          setSelectedCategory(categoriesData[0].id);
+          setSelectedCategories([categoriesData[0].id]);
         }
         setLoading(false);
         setLoadingCategories(false);
@@ -306,7 +300,7 @@ export default function GameRoomPage() {
     emit('start_game', { 
       room_id: roomId, 
       language: lang,
-      category_id: selectedCategory,
+      category_ids: selectedCategories,
       settings: {
         voting_time: votingTime,
         discussion_timer_enabled: discussionTimerEnabled,
@@ -331,6 +325,10 @@ export default function GameRoomPage() {
 
   const handleBackToLobby = () => {
     emit('back_to_lobby', { room_id: roomId });
+  };
+
+  const handleToggleReady = () => {
+    emit('toggle_ready', { room_id: roomId });
   };
 
   // Format time as MM:SS
@@ -402,318 +400,37 @@ export default function GameRoomPage() {
     }
   };
 
-  const renderWaiting = () => (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      className="flex min-h-screen flex-col items-center px-4 py-6"
-    >
-      {/* Header */}
-      <header className="w-full max-w-md flex justify-between items-center mb-6">
-        <button
-          onClick={handleLeaveRoom}
-          className="p-2 rounded-lg text-gray-muted hover:text-white hover:bg-purple-base/20 transition-colors"
-        >
-          <ArrowLeftIcon size={24} />
-        </button>
-        <LanguageSelector />
-      </header>
-
-      <main className="flex-1 flex flex-col w-full max-w-md space-y-6">
-        {/* Room Code Card */}
-        <Card variant="glass" className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-muted text-sm">{dict.multiplayer?.roomCode || 'Room Code'}</p>
-              <p className="text-2xl font-mono font-bold text-cyan-accent tracking-wider">{roomId}</p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={handleCopyRoomCode}
-                className="p-3 rounded-xl bg-cyan-accent/10 border border-cyan-accent/30 
-                           text-cyan-accent hover:bg-cyan-accent/20 transition-colors"
-                title={dict.multiplayer?.copyCode || 'Copy code'}
-              >
-                <CopyIcon size={20} />
-              </button>
-              <button
-                onClick={handleCopyRoomLink}
-                className="p-3 rounded-xl bg-purple-base/20 border border-purple-base/30 
-                           text-purple-light hover:bg-purple-base/30 transition-colors"
-                title={dict.multiplayer?.copyLink || 'Copy link'}
-              >
-                <LinkIcon size={20} />
-              </button>
-            </div>
-          </div>
-          {shareMessage && (
-            <motion.p
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-cyan-accent text-sm mt-2"
-            >
-              <CheckIcon size={14} className="inline mr-1" />
-              {shareMessage}
-            </motion.p>
-          )}
-        </Card>
-
-        {/* Players List */}
-        <Card variant="glass" className="p-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <UsersIcon size={20} className="text-purple-light" />
-              <span className="text-white font-medium">
-                {dict.lobby?.players || 'Players'}
-              </span>
-            </div>
-            <span className="text-gray-muted">
-              {playersList.length}/{room?.settings?.max_players || 0}
-            </span>
-          </div>
-
-          <div className="space-y-2 max-h-48 overflow-y-auto">
-            {playersList.map((player) => (
-              <div
-                key={player.id}
-                className={`flex items-center justify-between p-3 rounded-xl transition-all ${
-                  player.is_ready
-                    ? 'bg-emerald-500/10 border border-emerald-500/30'
-                    : 'bg-purple-darker/50 border border-purple-base/20'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      player.is_ready ? 'bg-emerald-500/20' : 'bg-purple-base/20'
-                    }`}
-                  >
-                    <UserIcon
-                      size={16}
-                      className={player.is_ready ? 'text-emerald-400' : 'text-gray-muted'}
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-white font-medium">{player.username}</span>
-                      {player.is_host && (
-                        <span className="text-xs bg-yellow-glow/20 text-yellow-glow px-1.5 py-0.5 rounded">
-                          Host
-                        </span>
-                      )}
-                      {player.id === currentPlayerId && (
-                        <span className="text-xs bg-purple-base/30 text-purple-light px-1.5 py-0.5 rounded">
-                          You
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div
-                  className={`w-3 h-3 rounded-full ${
-                    player.is_ready ? 'bg-emerald-400 animate-pulse' : 'bg-gray-muted/30'
-                  }`}
-                />
-              </div>
-            ))}
-          </div>
-
-          {/* Ready status */}
-          <div className="mt-4 pt-4 border-t border-purple-base/20">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-muted">
-                {readyCount}/{playersList.length} {dict.multiplayer?.ready || 'ready'}
-              </span>
-              <Button
-                onClick={() => emit('toggle_ready', { room_id: roomId })}
-                variant={currentPlayer?.is_ready ? 'secondary' : 'primary'}
-                size="sm"
-              >
-                {currentPlayer?.is_ready ? (
-                  <>
-                    <CheckIcon size={16} />
-                    {dict.multiplayer?.ready || 'Ready'}
-                  </>
-                ) : (
-                  dict.multiplayer?.markReady || 'Mark Ready'
-                )}
-              </Button>
-            </div>
-          </div>
-        </Card>
-
-        {/* Host Settings */}
-        {isHost && (
-          <>
-            {/* Category Selection */}
-            <Card variant="glass" className="p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <FolderIcon size={20} className="text-cyan-accent" />
-                <span className="text-white font-medium">
-                  {dict.multiplayer?.selectCategory || 'Category'}
-                </span>
-              </div>
-
-              {loadingCategories ? (
-                <div className="text-gray-muted text-center py-4">
-                  {dict.multiplayer?.loading || 'Loading...'}
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-2">
-                  {categories.map((category) => {
-                    const translation = category.translations?.find((t) => t.language === lang);
-                    const categoryName = translation?.name || category.key;
-                    const isSelected = selectedCategory === category.id;
-
-                    return (
-                      <button
-                        key={category.id}
-                        onClick={() => setSelectedCategory(category.id)}
-                        className={`p-3 rounded-xl border text-left transition-all ${
-                          isSelected
-                            ? 'bg-cyan-accent/10 border-cyan-accent/50 text-cyan-accent'
-                            : 'bg-purple-darker/50 border-purple-base/30 text-gray-muted hover:border-purple-base/50'
-                        }`}
-                      >
-                        <span className="font-medium">{categoryName}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </Card>
-
-            {/* Game Rules */}
-            <Card variant="glass" className="p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <ClockIcon size={20} className="text-yellow-glow" />
-                <span className="text-white font-medium">
-                  {dict.setup?.gameRules?.title || 'Game Rules'}
-                </span>
-              </div>
-
-              <div className="space-y-4">
-                {/* Voting Time */}
-                <TimeSelector
-                  label={dict.setup?.gameRules?.votingTime || 'Voting Time'}
-                  value={votingTime}
-                  onChange={setVotingTime}
-                  min={MIN_VOTING_TIME}
-                  max={MAX_VOTING_TIME}
-                  step={VOTING_TIME_STEP}
-                />
-
-                {/* Discussion Timer Toggle */}
-                <ToggleSwitch
-                  checked={discussionTimerEnabled}
-                  onChange={setDiscussionTimerEnabled}
-                  label={dict.setup?.gameRules?.discussionTimer || 'Discussion Timer'}
-                  description={dict.setup?.gameRules?.discussionTimerDesc || 'Optional time limit for discussion'}
-                />
-
-                {/* Discussion Time (if enabled) */}
-                {discussionTimerEnabled && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                  >
-                    <TimeSelector
-                      label={dict.setup?.gameRules?.discussionTime || 'Discussion Time'}
-                      value={discussionTime}
-                      onChange={setDiscussionTime}
-                      min={MIN_DISCUSSION_TIME}
-                      max={MAX_DISCUSSION_TIME}
-                      step={DISCUSSION_TIME_STEP}
-                    />
-                  </motion.div>
-                )}
-              </div>
-            </Card>
-
-            {/* Special Roles */}
-            <Card variant="glass" className="p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <MaskIcon size={20} className="text-purple-light" />
-                <span className="text-white font-medium">
-                  {dict.setup?.specialRoles?.title || 'Special Roles'}
-                </span>
-              </div>
-
-              <div className="space-y-3">
-                {/* Detective */}
-                <div className="flex items-start gap-3 p-3 rounded-xl bg-purple-darker/50 border border-purple-base/20">
-                  <div className="w-10 h-10 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
-                    <DetectiveIcon size={20} className="text-blue-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <ToggleSwitch
-                      checked={detectiveEnabled}
-                      onChange={setDetectiveEnabled}
-                      label={dict.setup?.specialRoles?.detective || 'Detective'}
-                      description={dict.setup?.specialRoles?.detectiveDesc || 'Can force a player to say more words'}
-                    />
-                  </div>
-                </div>
-
-                {/* Joker */}
-                <div className="flex items-start gap-3 p-3 rounded-xl bg-purple-darker/50 border border-purple-base/20">
-                  <div className="w-10 h-10 rounded-lg bg-yellow-500/20 border border-yellow-500/30 flex items-center justify-center flex-shrink-0">
-                    <JokerIcon size={20} className="text-yellow-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <ToggleSwitch
-                      checked={jokerEnabled}
-                      onChange={setJokerEnabled}
-                      label={dict.setup?.specialRoles?.joker || 'Joker'}
-                      description={dict.setup?.specialRoles?.jokerDesc || 'Knows the word but wants to be voted'}
-                    />
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {/* Start Game Button */}
-            <Button
-              onClick={handleStartGame}
-              variant="primary"
-              size="lg"
-              fullWidth
-              disabled={!allPlayersReady || playersList.length < 3}
-              className="flex items-center justify-center gap-2"
-            >
-              {!allPlayersReady ? (
-                <span className="text-gray-muted">
-                  {dict.multiplayer?.waitingForPlayers || 'Waiting for players...'}
-                </span>
-              ) : playersList.length < 3 ? (
-                <span className="text-gray-muted">
-                  {dict.multiplayer?.needMorePlayers || 'Need at least 3 players'}
-                </span>
-              ) : (
-                <>
-                  <PlayIcon size={20} />
-                  {dict.multiplayer?.startGame || 'Start Game'}
-                </>
-              )}
-            </Button>
-          </>
-        )}
-
-        {/* Non-host waiting message */}
-        {!isHost && (
-          <Card variant="glass" className="p-6 text-center">
-            <SettingsIcon size={32} className="text-gray-muted mx-auto mb-3" />
-            <p className="text-gray-muted">
-              {dict.multiplayer?.waitingForHost || 'Waiting for host to start the game...'}
-            </p>
-          </Card>
-        )}
-      </main>
-
-      <footer className="h-8" />
-    </motion.div>
-  );
+  const renderWaiting = () => {
+    if (!room) return null;
+    
+    return (
+      <LobbyContent
+        room={room}
+        currentPlayerId={currentPlayerId}
+        username={username}
+        lang={lang}
+        votingTime={votingTime}
+        discussionTimerEnabled={discussionTimerEnabled}
+        discussionTime={discussionTime}
+        detectiveEnabled={detectiveEnabled}
+        jokerEnabled={jokerEnabled}
+        selectedCategories={selectedCategories}
+        onVotingTimeChange={setVotingTime}
+        onDiscussionTimerToggle={setDiscussionTimerEnabled}
+        onDiscussionTimeChange={setDiscussionTime}
+        onDetectiveToggle={setDetectiveEnabled}
+        onJokerToggle={setJokerEnabled}
+        onCategoriesChange={setSelectedCategories}
+        onStartGame={handleStartGame}
+        onLeaveRoom={handleLeaveRoom}
+        onShareCode={handleCopyRoomCode}
+        onShareLink={handleCopyRoomLink}
+        onToggleReady={handleToggleReady}
+        shareMessage={shareMessage}
+        dict={dict}
+      />
+    );
+  };
 
   const renderRoleReveal = () => (
     <motion.div
@@ -732,50 +449,67 @@ export default function GameRoomPage() {
         </motion.div>
 
         {/* Role Card */}
-        <Card
-          variant="glass"
-          className={`p-8 ${
-            currentPlayer?.role === 'impostor'
-              ? 'border-red-500/50 bg-gradient-to-br from-red-900/20 to-red-700/20'
-              : 'border-emerald-500/50 bg-gradient-to-br from-emerald-900/20 to-emerald-700/20'
-          }`}
-        >
-          <div className="space-y-6">
-            <div
-              className={`w-24 h-24 mx-auto rounded-2xl flex items-center justify-center ${
-                currentPlayer?.role === 'impostor' ? 'bg-red-500/20' : 'bg-emerald-500/20'
-              }`}
-            >
-              <MaskIcon
-                size={48}
-                className={currentPlayer?.role === 'impostor' ? 'text-red-400' : 'text-emerald-400'}
-              />
-            </div>
+        {(() => {
+          const role = currentPlayer?.role;
+          let borderClass = 'border-emerald-500/50 bg-gradient-to-br from-emerald-900/20 to-emerald-700/20';
+          let iconBgClass = 'bg-emerald-500/20';
+          let textClass = 'text-emerald-400';
+          let RoleIcon = UserIcon;
+          let roleLabel = dict.reveal?.youAreCivilian || 'CIVILIAN';
+          let hint = '';
+          
+          if (role === 'impostor') {
+            borderClass = 'border-red-500/50 bg-gradient-to-br from-red-900/20 to-red-700/20';
+            iconBgClass = 'bg-red-500/20';
+            textClass = 'text-red-400';
+            RoleIcon = MaskIcon;
+            roleLabel = dict.reveal?.youAreImpostor || 'IMPOSTOR';
+            hint = dict.reveal?.impostorHint || "You don't know the word. Blend in!";
+          } else if (role === 'detective') {
+            borderClass = 'border-blue-500/50 bg-gradient-to-br from-blue-900/20 to-blue-700/20';
+            iconBgClass = 'bg-blue-500/20';
+            textClass = 'text-blue-400';
+            RoleIcon = DetectiveIcon;
+            roleLabel = dict.reveal?.youAreDetective || 'DETECTIVE';
+            hint = dict.reveal?.detectiveHint || 'You can ask someone to say more words about the topic.';
+          } else if (role === 'joker') {
+            borderClass = 'border-yellow-500/50 bg-gradient-to-br from-yellow-900/20 to-yellow-700/20';
+            iconBgClass = 'bg-yellow-500/20';
+            textClass = 'text-yellow-400';
+            RoleIcon = JokerIcon;
+            roleLabel = dict.reveal?.youAreJoker || 'JOKER';
+            hint = dict.reveal?.jokerHint || 'You know the word but want to get voted out!';
+          }
+          
+          return (
+            <Card variant="glass" className={`p-8 ${borderClass}`}>
+              <div className="space-y-6">
+                <div className={`w-24 h-24 mx-auto rounded-2xl flex items-center justify-center ${iconBgClass}`}>
+                  <RoleIcon size={48} className={textClass} />
+                </div>
 
-            <h2
-              className={`text-3xl font-bold ${
-                currentPlayer?.role === 'impostor' ? 'text-red-400' : 'text-emerald-400'
-              }`}
-            >
-              {currentPlayer?.role === 'impostor'
-                ? dict.reveal?.youAreImpostor || 'IMPOSTOR'
-                : dict.reveal?.youAreCivilian || 'CIVILIAN'}
-            </h2>
+                <h2 className={`text-3xl font-bold ${textClass}`}>
+                  {roleLabel}
+                </h2>
 
-            {currentPlayer?.role === 'civilian' && currentPlayer?.word && (
-              <div className="p-4 bg-white/10 rounded-xl">
-                <p className="text-gray-muted text-sm mb-2">{dict.reveal?.yourWord || 'Your word'}</p>
-                <p className="text-3xl font-bold text-white">{currentPlayer.word}</p>
+                {/* Word (shown to everyone except impostor) */}
+                {role !== 'impostor' && currentPlayer?.word && (
+                  <div className="p-4 bg-white/10 rounded-xl">
+                    <p className="text-gray-muted text-sm mb-2">{dict.reveal?.yourWord || 'Your word'}</p>
+                    <p className="text-3xl font-bold text-white">{currentPlayer.word}</p>
+                  </div>
+                )}
+
+                {/* Hint for special roles */}
+                {hint && (
+                  <p className="text-gray-muted text-sm">
+                    {hint}
+                  </p>
+                )}
               </div>
-            )}
-
-            {currentPlayer?.role === 'impostor' && (
-              <p className="text-gray-muted">
-                {dict.reveal?.impostorHint || "You don't know the word. Blend in!"}
-              </p>
-            )}
-          </div>
-        </Card>
+            </Card>
+          );
+        })()}
 
         <p className="text-gray-muted animate-pulse">
           {dict.reveal?.memorize || 'Memorize your role...'}
@@ -784,7 +518,12 @@ export default function GameRoomPage() {
     </motion.div>
   );
 
-  const renderPlaying = () => (
+  const renderPlaying = () => {
+    const startingPlayer = room?.game_state?.starting_player_id 
+      ? room.players[room.game_state.starting_player_id] 
+      : null;
+    
+    return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -803,44 +542,77 @@ export default function GameRoomPage() {
           </div>
         </Card>
 
-        {/* Your Role */}
-        <Card
-          variant="glass"
-          className={`p-4 ${
-            currentPlayer?.role === 'impostor' ? 'border-red-500/30' : 'border-emerald-500/30'
-          }`}
-        >
-          <div className="flex items-center gap-4">
-            <div
-              className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                currentPlayer?.role === 'impostor' ? 'bg-red-500/20' : 'bg-emerald-500/20'
-              }`}
-            >
-              <MaskIcon
-                size={24}
-                className={currentPlayer?.role === 'impostor' ? 'text-red-400' : 'text-emerald-400'}
-              />
-            </div>
-            <div>
-              <p className="text-gray-muted text-sm">{dict.play?.youAre || 'You are'}</p>
-              <p
-                className={`text-xl font-bold ${
-                  currentPlayer?.role === 'impostor' ? 'text-red-400' : 'text-emerald-400'
-                }`}
+        {/* Starting Player */}
+        {startingPlayer && (
+          <Card variant="glass" className="p-4 text-center border-cyan-accent/30">
+            <p className="text-gray-muted text-sm mb-2">{dict.play?.startsFirst || 'Starts first'}</p>
+            <div className="flex items-center justify-center gap-3">
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+                className="w-10 h-10 rounded-full bg-cyan-accent/20 border-2 border-cyan-accent/50
+                            flex items-center justify-center"
               >
-                {currentPlayer?.role === 'impostor'
-                  ? dict.play?.impostor || 'Impostor'
-                  : dict.play?.civilian || 'Civilian'}
-              </p>
+                <UserIcon size={20} className="text-cyan-accent" />
+              </motion.div>
+              <span className="text-2xl font-bold text-cyan-accent">
+                {startingPlayer.username}
+              </span>
             </div>
-            {currentPlayer?.role === 'civilian' && currentPlayer?.word && (
-              <div className="ml-auto text-right">
-                <p className="text-gray-muted text-xs">{dict.reveal?.yourWord || 'Word'}</p>
-                <p className="text-lg font-bold text-cyan-accent">{currentPlayer.word}</p>
+          </Card>
+        )}
+
+        {/* Your Role */}
+        {(() => {
+          const role = currentPlayer?.role;
+          let borderClass = 'border-emerald-500/30';
+          let iconBgClass = 'bg-emerald-500/20';
+          let textClass = 'text-emerald-400';
+          let RoleIcon = UserIcon;
+          let roleLabel = dict.play?.civilian || 'Civilian';
+          
+          if (role === 'impostor') {
+            borderClass = 'border-red-500/30';
+            iconBgClass = 'bg-red-500/20';
+            textClass = 'text-red-400';
+            RoleIcon = MaskIcon;
+            roleLabel = dict.play?.impostor || 'Impostor';
+          } else if (role === 'detective') {
+            borderClass = 'border-blue-500/30';
+            iconBgClass = 'bg-blue-500/20';
+            textClass = 'text-blue-400';
+            RoleIcon = DetectiveIcon;
+            roleLabel = dict.play?.detective || 'Detective';
+          } else if (role === 'joker') {
+            borderClass = 'border-yellow-500/30';
+            iconBgClass = 'bg-yellow-500/20';
+            textClass = 'text-yellow-400';
+            RoleIcon = JokerIcon;
+            roleLabel = dict.play?.joker || 'Joker';
+          }
+          
+          return (
+            <Card variant="glass" className={`p-4 ${borderClass}`}>
+              <div className="flex items-center gap-4">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${iconBgClass}`}>
+                  <RoleIcon size={24} className={textClass} />
+                </div>
+                <div>
+                  <p className="text-gray-muted text-sm">{dict.play?.youAre || 'You are'}</p>
+                  <p className={`text-xl font-bold ${textClass}`}>
+                    {roleLabel}
+                  </p>
+                </div>
+                {role !== 'impostor' && currentPlayer?.word && (
+                  <div className="ml-auto text-right">
+                    <p className="text-gray-muted text-xs">{dict.reveal?.yourWord || 'Word'}</p>
+                    <p className="text-lg font-bold text-cyan-accent">{currentPlayer.word}</p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </Card>
+            </Card>
+          );
+        })()}
 
         {/* Players */}
         <Card variant="glass" className="p-4">
@@ -892,6 +664,7 @@ export default function GameRoomPage() {
       </div>
     </motion.div>
   );
+  };
 
   const renderVoting = () => (
     <motion.div
@@ -966,25 +739,73 @@ export default function GameRoomPage() {
   const renderResults = () => {
     const result = room?.game_state?.result;
     const impostorId = room?.game_state?.impostor_id;
+    const detectiveId = room?.game_state?.detective_id;
+    const jokerId = room?.game_state?.joker_id;
     const mostVotedId = room?.game_state?.most_voted_id;
     const impostor = impostorId ? room?.players[impostorId] : null;
     const mostVoted = mostVotedId ? room?.players[mostVotedId] : null;
     
     const isImpostor = currentPlayer?.role === 'impostor';
+    const isJoker = currentPlayer?.role === 'joker';
     const civiliansWon = result === 'civilians_win';
-    const playerWon = (isImpostor && !civiliansWon) || (!isImpostor && civiliansWon);
+    
+    // Joker wins if they got voted out
+    const jokerWon = isJoker && mostVotedId === currentPlayerId;
+    // Impostor wins if civilians lost AND impostor wasn't voted out
+    const impostorWon = isImpostor && !civiliansWon;
+    // Civilians/Detective win if they caught the impostor
+    const civilianWon = !isImpostor && !isJoker && civiliansWon;
+    
+    const playerWon = civilianWon || impostorWon || jokerWon;
+    
+    // Helper to get role info for each player
+    const getRoleInfo = (player: Player) => {
+      if (player.id === impostorId) {
+        return {
+          role: 'impostor',
+          label: dict.play?.impostor || 'Impostor',
+          bgClass: 'bg-red-500/10 border-red-500/30',
+          textClass: 'text-red-400',
+          Icon: MaskIcon,
+        };
+      } else if (player.id === detectiveId) {
+        return {
+          role: 'detective',
+          label: dict.play?.detective || 'Detective',
+          bgClass: 'bg-blue-500/10 border-blue-500/30',
+          textClass: 'text-blue-400',
+          Icon: DetectiveIcon,
+        };
+      } else if (player.id === jokerId) {
+        return {
+          role: 'joker',
+          label: dict.play?.joker || 'Joker',
+          bgClass: 'bg-yellow-500/10 border-yellow-500/30',
+          textClass: 'text-yellow-400',
+          Icon: JokerIcon,
+        };
+      } else {
+        return {
+          role: 'civilian',
+          label: dict.play?.civilian || 'Civilian',
+          bgClass: 'bg-emerald-500/10 border-emerald-500/30',
+          textClass: 'text-emerald-400',
+          Icon: UserIcon,
+        };
+      }
+    };
     
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="flex min-h-screen flex-col items-center justify-center px-4"
+        className="flex min-h-screen flex-col items-center px-4 py-6"
       >
-        <div className="w-full max-w-md space-y-6">
+        <div className="w-full max-w-md space-y-5">
           {/* Victory/Defeat Banner */}
           <Card
             variant="glass"
-            className={`p-8 text-center ${
+            className={`p-6 text-center ${
               playerWon ? 'border-emerald-500/50' : 'border-red-500/50'
             }`}
           >
@@ -992,12 +813,21 @@ export default function GameRoomPage() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 200 }}
-              className={`text-8xl mb-4 ${playerWon ? '' : 'grayscale'}`}
+              className="w-20 h-20 mx-auto mb-4 rounded-2xl flex items-center justify-center"
+              style={{
+                background: playerWon 
+                  ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2))'
+                  : 'linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(168, 85, 247, 0.2))',
+              }}
             >
-              {playerWon ? '🎉' : '😢'}
+              {playerWon ? (
+                <CheckIcon size={40} className="text-emerald-400" />
+              ) : (
+                <MaskIcon size={40} className="text-red-400" />
+              )}
             </motion.div>
             <h1
-              className={`text-4xl font-bold ${
+              className={`text-3xl font-bold ${
                 playerWon ? 'text-emerald-400' : 'text-red-400'
               }`}
             >
@@ -1013,38 +843,66 @@ export default function GameRoomPage() {
           </Card>
 
           {/* The Word */}
-          <Card variant="glass" className="p-6 text-center">
+          <Card variant="glass" className="p-5 text-center">
             <p className="text-gray-muted text-sm mb-2">{dict.play?.theWordWas || 'The word was'}</p>
             <p className="text-3xl font-bold text-cyan-accent">{room?.game_state?.word}</p>
           </Card>
 
           {/* The Impostor */}
-          <Card variant="glass" className="p-6 text-center border-red-500/30">
+          <Card variant="glass" className="p-5 text-center border-red-500/30">
             <p className="text-gray-muted text-sm mb-2">
               {dict.play?.theImpostorWas || 'The impostor was'}
             </p>
             <div className="flex items-center justify-center gap-3">
-              <MaskIcon size={28} className="text-red-400" />
+              <div className="w-12 h-12 rounded-full bg-red-500/20 border-2 border-red-500/50 flex items-center justify-center">
+                <MaskIcon size={24} className="text-red-400" />
+              </div>
               <span className="text-2xl font-bold text-red-400">
                 {impostor?.username || 'Unknown'}
               </span>
             </div>
           </Card>
 
-          {/* Most Voted */}
-          {mostVoted && (
-            <Card variant="glass" className="p-4 text-center">
-              <p className="text-gray-muted text-sm mb-1">
-                {dict.play?.mostVoted || 'Most voted'}
-              </p>
-              <p className="text-xl font-bold text-purple-light">
-                {mostVoted.username}
-                {mostVotedId === impostorId && (
-                  <CheckIcon size={20} className="inline ml-2 text-emerald-400" />
-                )}
-              </p>
-            </Card>
-          )}
+          {/* All Players with Roles */}
+          <Card variant="glass" className="p-4">
+            <p className="text-gray-muted text-sm mb-3 text-center">{dict.play?.allPlayers || 'All Players'}</p>
+            <div className="space-y-2">
+              {playersList.map((player) => {
+                const roleInfo = getRoleInfo(player);
+                const RoleIcon = roleInfo.Icon;
+                const wasVoted = player.id === mostVotedId;
+                
+                return (
+                  <div
+                    key={player.id}
+                    className={`flex items-center justify-between p-3 rounded-lg border ${roleInfo.bgClass}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <RoleIcon size={18} className={roleInfo.textClass} />
+                      <span className="text-white font-medium">
+                        {player.username}
+                        {player.id === currentPlayerId && (
+                          <span className="text-xs bg-purple-base/30 text-purple-light px-1.5 py-0.5 rounded ml-2">
+                            You
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-semibold ${roleInfo.textClass}`}>
+                        {roleInfo.label}
+                      </span>
+                      {wasVoted && (
+                        <span className="text-xs bg-purple-base/30 text-purple-light px-1.5 py-0.5 rounded">
+                          Voted
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
 
           {/* Back to Lobby */}
           {isHost ? (
@@ -1059,9 +917,11 @@ export default function GameRoomPage() {
               {dict.play?.playAgain || 'Play Again'}
             </Button>
           ) : (
-            <p className="text-center text-gray-muted">
-              {dict.multiplayer?.waitingForHost || 'Waiting for host...'}
-            </p>
+            <Card variant="glass" className="p-4 text-center">
+              <p className="text-gray-muted">
+                {dict.multiplayer?.waitingForHost || 'Waiting for host...'}
+              </p>
+            </Card>
           )}
         </div>
       </motion.div>

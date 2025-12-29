@@ -13,6 +13,8 @@ export enum RoomPhase {
 export enum PlayerRole {
   CIVILIAN = 'civilian',
   IMPOSTOR = 'impostor',
+  DETECTIVE = 'detective',
+  JOKER = 'joker',
 }
 
 export enum GameResult {
@@ -34,14 +36,22 @@ export interface Player {
 
 export interface RoomSettings {
   max_players: number;
-  category_id: number;
+  category_ids: number[];
   is_public: boolean;
   password?: string | null;
+  detective_enabled?: boolean;
+  joker_enabled?: boolean;
+  voting_time?: number;
+  discussion_timer_enabled?: boolean;
+  discussion_time?: number;
 }
 
 export interface GameState {
   word: string;
   impostor_id: string;
+  detective_id?: string | null;
+  joker_id?: string | null;
+  starting_player_id: string;
   phase_start_time: number;
   votes_submitted: number;
   result?: GameResult | null;
@@ -51,6 +61,7 @@ export interface GameState {
 export interface Room {
   id: string;
   host_id: string;
+  max_players: number;
   settings: RoomSettings;
   phase: RoomPhase;
   players: Record<string, Player>;
@@ -63,7 +74,7 @@ export interface PublicRoom {
   id: string;
   player_count: number;
   max_players: number;
-  category_id: number;
+  category_ids: number[];
 }
 
 // Socket.IO event payloads
