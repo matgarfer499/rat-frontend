@@ -34,3 +34,4 @@ export { RandomIcon } from './RandomIcon';
 export { ShieldIcon } from './ShieldIcon';
 export { CloseIcon } from './CloseIcon';
 export { FingerprintIcon } from './FingerprintIcon';
+export { HashIcon } from './HashIcon';
