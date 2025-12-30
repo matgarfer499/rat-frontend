@@ -7,3 +7,7 @@ export { DiscussionTimer } from './DiscussionTimer';
 export { PlayerCard } from './PlayerCard';
 export { VotingPhase } from './VotingPhase';
 export { RevealPhase } from './RevealPhase';
+export { VotingTimer } from './VotingTimer';
+export { VotePlayerCard } from './VotePlayerCard';
+export { ResultBanner } from './ResultBanner';
+export { PlayerRoleCard } from './PlayerRoleCard';

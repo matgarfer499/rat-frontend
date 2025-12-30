@@ -9,17 +9,12 @@ import { useDictionary } from '@hooks/use-dictionary';
 import { useSocket } from '@hooks/use-socket';
 import { getRoom, getCategories } from '@lib/rooms-api';
 import { LobbyContent } from '@components/multiplayer/LobbyContent';
+import { PlayingContent } from '@components/multiplayer/PlayingContent';
+import { RoleRevealContent } from '@components/multiplayer/RoleRevealContent';
+import { VotingContent } from '@components/multiplayer/VotingContent';
+import { ResultsContent } from '@components/multiplayer/ResultsContent';
+import { ArrowLeftIcon } from '@components/icons';
 import type { Room, Player } from '@/types/room';
-import {
-  ArrowLeftIcon,
-  UsersIcon,
-  UserIcon,
-  CheckIcon,
-  DetectiveIcon,
-  JokerIcon,
-  MaskIcon,
-  RefreshIcon,
-} from '@components/icons';
 
 interface Category {
   id: number;
@@ -433,498 +428,60 @@ export default function GameRoomPage() {
   };
 
   const renderRoleReveal = () => (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="flex min-h-screen flex-col items-center justify-center px-4"
-    >
-      <div className="w-full max-w-md space-y-8 text-center">
-        {/* Timer */}
-        <motion.div
-          animate={{ scale: [1, 1.1, 1] }}
-          transition={{ repeat: Infinity, duration: 1 }}
-          className="text-6xl font-bold text-cyan-accent"
-        >
-          {timeRemaining}
-        </motion.div>
-
-        {/* Role Card */}
-        {(() => {
-          const role = currentPlayer?.role;
-          let borderClass = 'border-emerald-500/50 bg-gradient-to-br from-emerald-900/20 to-emerald-700/20';
-          let iconBgClass = 'bg-emerald-500/20';
-          let textClass = 'text-emerald-400';
-          let RoleIcon = UserIcon;
-          let roleLabel = dict.reveal?.youAreCivilian || 'CIVILIAN';
-          let hint = '';
-          
-          if (role === 'impostor') {
-            borderClass = 'border-red-500/50 bg-gradient-to-br from-red-900/20 to-red-700/20';
-            iconBgClass = 'bg-red-500/20';
-            textClass = 'text-red-400';
-            RoleIcon = MaskIcon;
-            roleLabel = dict.reveal?.youAreImpostor || 'IMPOSTOR';
-            hint = dict.reveal?.impostorHint || "You don't know the word. Blend in!";
-          } else if (role === 'detective') {
-            borderClass = 'border-blue-500/50 bg-gradient-to-br from-blue-900/20 to-blue-700/20';
-            iconBgClass = 'bg-blue-500/20';
-            textClass = 'text-blue-400';
-            RoleIcon = DetectiveIcon;
-            roleLabel = dict.reveal?.youAreDetective || 'DETECTIVE';
-            hint = dict.reveal?.detectiveHint || 'You can ask someone to say more words about the topic.';
-          } else if (role === 'joker') {
-            borderClass = 'border-yellow-500/50 bg-gradient-to-br from-yellow-900/20 to-yellow-700/20';
-            iconBgClass = 'bg-yellow-500/20';
-            textClass = 'text-yellow-400';
-            RoleIcon = JokerIcon;
-            roleLabel = dict.reveal?.youAreJoker || 'JOKER';
-            hint = dict.reveal?.jokerHint || 'You know the word but want to get voted out!';
-          }
-          
-          return (
-            <Card variant="glass" className={`p-8 ${borderClass}`}>
-              <div className="space-y-6">
-                <div className={`w-24 h-24 mx-auto rounded-2xl flex items-center justify-center ${iconBgClass}`}>
-                  <RoleIcon size={48} className={textClass} />
-                </div>
-
-                <h2 className={`text-3xl font-bold ${textClass}`}>
-                  {roleLabel}
-                </h2>
-
-                {/* Word (shown to everyone except impostor) */}
-                {role !== 'impostor' && currentPlayer?.word && (
-                  <div className="p-4 bg-white/10 rounded-xl">
-                    <p className="text-gray-muted text-sm mb-2">{dict.reveal?.yourWord || 'Your word'}</p>
-                    <p className="text-3xl font-bold text-white">{currentPlayer.word}</p>
-                  </div>
-                )}
-
-                {/* Hint for special roles */}
-                {hint && (
-                  <p className="text-gray-muted text-sm">
-                    {hint}
-                  </p>
-                )}
-              </div>
-            </Card>
-          );
-        })()}
-
-        <p className="text-gray-muted animate-pulse">
-          {dict.reveal?.memorize || 'Memorize your role...'}
-        </p>
-      </div>
-    </motion.div>
+    <RoleRevealContent
+      currentPlayer={currentPlayer || null}
+      timeRemaining={timeRemaining}
+      dict={dict}
+    />
   );
 
   const renderPlaying = () => {
-    const startingPlayer = room?.game_state?.starting_player_id 
-      ? room.players[room.game_state.starting_player_id] 
-      : null;
+    if (!room) return null;
     
     return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="flex min-h-screen flex-col items-center px-4 py-6"
-    >
-      <div className="w-full max-w-md space-y-6">
-        {/* Timer */}
-        <Card variant="glass" className="p-6 text-center">
-          <p className="text-gray-muted text-sm mb-2">{dict.play?.timeRemaining || 'Time Remaining'}</p>
-          <div
-            className={`text-5xl font-bold ${
-              timeRemaining <= 30 ? 'text-red-400 animate-pulse' : 'text-cyan-accent'
-            }`}
-          >
-            {formatTime(timeRemaining)}
-          </div>
-        </Card>
-
-        {/* Starting Player */}
-        {startingPlayer && (
-          <Card variant="glass" className="p-4 text-center border-cyan-accent/30">
-            <p className="text-gray-muted text-sm mb-2">{dict.play?.startsFirst || 'Starts first'}</p>
-            <div className="flex items-center justify-center gap-3">
-              <motion.div
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
-                className="w-10 h-10 rounded-full bg-cyan-accent/20 border-2 border-cyan-accent/50
-                            flex items-center justify-center"
-              >
-                <UserIcon size={20} className="text-cyan-accent" />
-              </motion.div>
-              <span className="text-2xl font-bold text-cyan-accent">
-                {startingPlayer.username}
-              </span>
-            </div>
-          </Card>
-        )}
-
-        {/* Your Role */}
-        {(() => {
-          const role = currentPlayer?.role;
-          let borderClass = 'border-emerald-500/30';
-          let iconBgClass = 'bg-emerald-500/20';
-          let textClass = 'text-emerald-400';
-          let RoleIcon = UserIcon;
-          let roleLabel = dict.play?.civilian || 'Civilian';
-          
-          if (role === 'impostor') {
-            borderClass = 'border-red-500/30';
-            iconBgClass = 'bg-red-500/20';
-            textClass = 'text-red-400';
-            RoleIcon = MaskIcon;
-            roleLabel = dict.play?.impostor || 'Impostor';
-          } else if (role === 'detective') {
-            borderClass = 'border-blue-500/30';
-            iconBgClass = 'bg-blue-500/20';
-            textClass = 'text-blue-400';
-            RoleIcon = DetectiveIcon;
-            roleLabel = dict.play?.detective || 'Detective';
-          } else if (role === 'joker') {
-            borderClass = 'border-yellow-500/30';
-            iconBgClass = 'bg-yellow-500/20';
-            textClass = 'text-yellow-400';
-            RoleIcon = JokerIcon;
-            roleLabel = dict.play?.joker || 'Joker';
-          }
-          
-          return (
-            <Card variant="glass" className={`p-4 ${borderClass}`}>
-              <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${iconBgClass}`}>
-                  <RoleIcon size={24} className={textClass} />
-                </div>
-                <div>
-                  <p className="text-gray-muted text-sm">{dict.play?.youAre || 'You are'}</p>
-                  <p className={`text-xl font-bold ${textClass}`}>
-                    {roleLabel}
-                  </p>
-                </div>
-                {role !== 'impostor' && currentPlayer?.word && (
-                  <div className="ml-auto text-right">
-                    <p className="text-gray-muted text-xs">{dict.reveal?.yourWord || 'Word'}</p>
-                    <p className="text-lg font-bold text-cyan-accent">{currentPlayer.word}</p>
-                  </div>
-                )}
-              </div>
-            </Card>
-          );
-        })()}
-
-        {/* Players */}
-        <Card variant="glass" className="p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <UsersIcon size={18} className="text-purple-light" />
-            <span className="text-white font-medium">{dict.lobby?.players || 'Players'}</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            {playersList.map((player) => (
-              <div
-                key={player.id}
-                className={`p-3 rounded-xl ${
-                  player.wants_to_vote
-                    ? 'bg-yellow-glow/10 border border-yellow-glow/30'
-                    : 'bg-purple-darker/50 border border-purple-base/20'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-white font-medium text-sm">{player.username}</span>
-                  {player.id === currentPlayerId && (
-                    <span className="text-xs text-purple-light">(You)</span>
-                  )}
-                </div>
-                {player.wants_to_vote && (
-                  <span className="text-xs text-yellow-glow">Wants to vote</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        {/* Request Vote */}
-        <Button
-          onClick={handleRequestVote}
-          variant={currentPlayer?.wants_to_vote ? 'secondary' : 'primary'}
-          size="lg"
-          fullWidth
-          disabled={currentPlayer?.wants_to_vote}
-        >
-          {currentPlayer?.wants_to_vote ? (
-            <>
-              <CheckIcon size={18} />
-              {dict.play?.voteRequested || 'Vote Requested'} ({wantsToVoteCount}/{playersList.length})
-            </>
-          ) : (
-            <>{dict.play?.requestVote || 'Request Voting'}</>
-          )}
-        </Button>
-      </div>
-    </motion.div>
-  );
+      <PlayingContent
+        room={room}
+        currentPlayerId={currentPlayerId}
+        timeRemaining={timeRemaining}
+        discussionTime={discussionTime}
+        onRequestVote={handleRequestVote}
+        dict={dict}
+      />
+    );
   };
 
   const renderVoting = () => (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="flex min-h-screen flex-col items-center px-4 py-6"
-    >
-      <div className="w-full max-w-md space-y-6">
-        {/* Timer */}
-        <div className="text-center">
-          <motion.div
-            animate={timeRemaining <= 10 ? { scale: [1, 1.1, 1] } : {}}
-            transition={{ repeat: Infinity, duration: 0.5 }}
-            className={`text-6xl font-bold ${
-              timeRemaining <= 10 ? 'text-red-400' : 'text-yellow-glow'
-            }`}
-          >
-            {timeRemaining}
-          </motion.div>
-          <p className="text-gray-muted mt-2">{dict.play?.secondsToVote || 'seconds to vote'}</p>
-        </div>
-
-        <h2 className="text-2xl font-bold text-center text-white">
-          {dict.play?.whoIsImpostor || 'Who is the impostor?'}
-        </h2>
-
-        {/* Vote count */}
-        <div className="text-center">
-          <span className="bg-purple-base/30 text-purple-light px-4 py-2 rounded-full text-sm">
-            {room?.game_state?.votes_submitted || 0}/{playersList.length} votes
-          </span>
-        </div>
-
-        {/* Players to vote */}
-        <div className="space-y-2">
-          {playersList
-            .filter((p) => p.id !== currentPlayerId)
-            .map((player) => (
-              <button
-                key={player.id}
-                onClick={() => handleVote(player.id)}
-                disabled={hasVoted}
-                className={`w-full p-4 rounded-xl text-left transition-all ${
-                  selectedVote === player.id
-                    ? 'bg-purple-base border border-purple-light text-white'
-                    : hasVoted
-                    ? 'bg-purple-darker/30 border border-purple-base/20 text-gray-muted cursor-not-allowed'
-                    : 'bg-purple-darker/50 border border-purple-base/30 text-white hover:border-purple-base/50'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <UserIcon size={24} className="text-gray-muted" />
-                    <span className="font-medium">{player.username}</span>
-                  </div>
-                  {selectedVote === player.id && <CheckIcon size={20} className="text-cyan-accent" />}
-                </div>
-              </button>
-            ))}
-        </div>
-
-        {hasVoted && (
-          <p className="text-center text-emerald-400 font-medium">
-            <CheckIcon size={18} className="inline mr-1" />
-            {dict.play?.voteSubmitted || 'Vote submitted'}
-          </p>
-        )}
-      </div>
-    </motion.div>
+    <VotingContent
+      players={playersList}
+      currentPlayerId={currentPlayerId}
+      timeRemaining={timeRemaining}
+      votesSubmitted={room?.game_state?.votes_submitted || 0}
+      hasVoted={hasVoted}
+      selectedVote={selectedVote}
+      onVote={handleVote}
+      dict={dict}
+    />
   );
 
   const renderResults = () => {
-    const result = room?.game_state?.result;
-    const impostorId = room?.game_state?.impostor_id;
-    const detectiveId = room?.game_state?.detective_id;
-    const jokerId = room?.game_state?.joker_id;
-    const mostVotedId = room?.game_state?.most_voted_id;
-    const impostor = impostorId ? room?.players[impostorId] : null;
-    const mostVoted = mostVotedId ? room?.players[mostVotedId] : null;
-    
-    const isImpostor = currentPlayer?.role === 'impostor';
-    const isJoker = currentPlayer?.role === 'joker';
-    const civiliansWon = result === 'civilians_win';
-    
-    // Joker wins if they got voted out
-    const jokerWon = isJoker && mostVotedId === currentPlayerId;
-    // Impostor wins if civilians lost AND impostor wasn't voted out
-    const impostorWon = isImpostor && !civiliansWon;
-    // Civilians/Detective win if they caught the impostor
-    const civilianWon = !isImpostor && !isJoker && civiliansWon;
-    
-    const playerWon = civilianWon || impostorWon || jokerWon;
-    
-    // Helper to get role info for each player
-    const getRoleInfo = (player: Player) => {
-      if (player.id === impostorId) {
-        return {
-          role: 'impostor',
-          label: dict.play?.impostor || 'Impostor',
-          bgClass: 'bg-red-500/10 border-red-500/30',
-          textClass: 'text-red-400',
-          Icon: MaskIcon,
-        };
-      } else if (player.id === detectiveId) {
-        return {
-          role: 'detective',
-          label: dict.play?.detective || 'Detective',
-          bgClass: 'bg-blue-500/10 border-blue-500/30',
-          textClass: 'text-blue-400',
-          Icon: DetectiveIcon,
-        };
-      } else if (player.id === jokerId) {
-        return {
-          role: 'joker',
-          label: dict.play?.joker || 'Joker',
-          bgClass: 'bg-yellow-500/10 border-yellow-500/30',
-          textClass: 'text-yellow-400',
-          Icon: JokerIcon,
-        };
-      } else {
-        return {
-          role: 'civilian',
-          label: dict.play?.civilian || 'Civilian',
-          bgClass: 'bg-emerald-500/10 border-emerald-500/30',
-          textClass: 'text-emerald-400',
-          Icon: UserIcon,
-        };
-      }
-    };
+    if (!room?.game_state) return null;
     
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="flex min-h-screen flex-col items-center px-4 py-6"
-      >
-        <div className="w-full max-w-md space-y-5">
-          {/* Victory/Defeat Banner */}
-          <Card
-            variant="glass"
-            className={`p-6 text-center ${
-              playerWon ? 'border-emerald-500/50' : 'border-red-500/50'
-            }`}
-          >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', stiffness: 200 }}
-              className="w-20 h-20 mx-auto mb-4 rounded-2xl flex items-center justify-center"
-              style={{
-                background: playerWon 
-                  ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2))'
-                  : 'linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(168, 85, 247, 0.2))',
-              }}
-            >
-              {playerWon ? (
-                <CheckIcon size={40} className="text-emerald-400" />
-              ) : (
-                <MaskIcon size={40} className="text-red-400" />
-              )}
-            </motion.div>
-            <h1
-              className={`text-3xl font-bold ${
-                playerWon ? 'text-emerald-400' : 'text-red-400'
-              }`}
-            >
-              {playerWon
-                ? dict.play?.victory || 'VICTORY!'
-                : dict.play?.defeat || 'DEFEAT!'}
-            </h1>
-            <p className="text-gray-muted mt-2">
-              {civiliansWon
-                ? dict.play?.civiliansWon || 'Civilians caught the impostor!'
-                : dict.play?.impostorWon || 'The impostor fooled everyone!'}
-            </p>
-          </Card>
-
-          {/* The Word */}
-          <Card variant="glass" className="p-5 text-center">
-            <p className="text-gray-muted text-sm mb-2">{dict.play?.theWordWas || 'The word was'}</p>
-            <p className="text-3xl font-bold text-cyan-accent">{room?.game_state?.word}</p>
-          </Card>
-
-          {/* The Impostor */}
-          <Card variant="glass" className="p-5 text-center border-red-500/30">
-            <p className="text-gray-muted text-sm mb-2">
-              {dict.play?.theImpostorWas || 'The impostor was'}
-            </p>
-            <div className="flex items-center justify-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-red-500/20 border-2 border-red-500/50 flex items-center justify-center">
-                <MaskIcon size={24} className="text-red-400" />
-              </div>
-              <span className="text-2xl font-bold text-red-400">
-                {impostor?.username || 'Unknown'}
-              </span>
-            </div>
-          </Card>
-
-          {/* All Players with Roles */}
-          <Card variant="glass" className="p-4">
-            <p className="text-gray-muted text-sm mb-3 text-center">{dict.play?.allPlayers || 'All Players'}</p>
-            <div className="space-y-2">
-              {playersList.map((player) => {
-                const roleInfo = getRoleInfo(player);
-                const RoleIcon = roleInfo.Icon;
-                const wasVoted = player.id === mostVotedId;
-                
-                return (
-                  <div
-                    key={player.id}
-                    className={`flex items-center justify-between p-3 rounded-lg border ${roleInfo.bgClass}`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <RoleIcon size={18} className={roleInfo.textClass} />
-                      <span className="text-white font-medium">
-                        {player.username}
-                        {player.id === currentPlayerId && (
-                          <span className="text-xs bg-purple-base/30 text-purple-light px-1.5 py-0.5 rounded ml-2">
-                            You
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-sm font-semibold ${roleInfo.textClass}`}>
-                        {roleInfo.label}
-                      </span>
-                      {wasVoted && (
-                        <span className="text-xs bg-purple-base/30 text-purple-light px-1.5 py-0.5 rounded">
-                          Voted
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
-
-          {/* Back to Lobby */}
-          {isHost ? (
-            <Button
-              onClick={handleBackToLobby}
-              variant="primary"
-              size="lg"
-              fullWidth
-              className="flex items-center justify-center gap-2"
-            >
-              <RefreshIcon size={20} />
-              {dict.play?.playAgain || 'Play Again'}
-            </Button>
-          ) : (
-            <Card variant="glass" className="p-4 text-center">
-              <p className="text-gray-muted">
-                {dict.multiplayer?.waitingForHost || 'Waiting for host...'}
-              </p>
-            </Card>
-          )}
-        </div>
-      </motion.div>
+      <ResultsContent
+        players={playersList}
+        currentPlayerId={currentPlayerId}
+        gameState={{
+          word: room.game_state.word || '',
+          impostor_id: room.game_state.impostor_id || '',
+          detective_id: room.game_state.detective_id,
+          joker_id: room.game_state.joker_id,
+          most_voted_id: room.game_state.most_voted_id,
+          result: room.game_state.result,
+        }}
+        isHost={isHost || false}
+        onPlayAgain={handleBackToLobby}
+        dict={dict}
+      />
     );
   };
 
