@@ -55,11 +55,3 @@ export interface GameConfig {
   selectedCategories: number[];
   roles?: GameRoles;
 }
-
-export interface GameState {
-  config: GameConfig;
-  currentPlayerIndex: number;
-  assignedWord: string | null;
-  impostorId: string | null;
-  gamePhase: 'setup' | 'category-selection' | 'role-reveal' | 'playing' | 'reveal';
-}

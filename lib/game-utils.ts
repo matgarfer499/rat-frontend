@@ -1,3 +1,10 @@
+import {
+  UserIcon,
+  MaskIcon,
+  DetectiveIcon,
+  JokerIcon,
+} from '@components/icons';
+
 export function formatTime(seconds: number) {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -7,63 +14,73 @@ export function formatTime(seconds: number) {
   };
 }
 
-interface RoleInfo {
+export type RoleType = 'civilian' | 'impostor' | 'detective' | 'joker';
+
+export interface RoleStyleInfo {
+  borderClass: string;
   bgClass: string;
   textClass: string;
-  roleLabel: string;
-  IconComponent: React.ComponentType<{ size?: number; className?: string }>;
+  iconBgClass: string;
+  Icon: React.ComponentType<{ size?: number; className?: string }>;
+  label: string;
 }
 
-export function getRoleInfo(
-  playerId: string,
-  impostorId: string,
-  detectiveId: string | null,
-  jokerId: string | null,
-  dict: any,
-  icons: {
-    UserIcon: React.ComponentType<any>;
-    MaskIcon: React.ComponentType<any>;
-    DetectiveIcon: React.ComponentType<any>;
-    JokerIcon: React.ComponentType<any>;
-  }
-): RoleInfo {
-  const { UserIcon, MaskIcon, DetectiveIcon, JokerIcon } = icons;
-  
-  const isImpostor = playerId === impostorId;
-  const isDetective = playerId === detectiveId;
-  const isJoker = playerId === jokerId;
+export interface RoleLabels {
+  civilian?: string;
+  impostor?: string;
+  detective?: string;
+  joker?: string;
+}
 
-  if (isImpostor) {
-    return {
-      bgClass: 'bg-red-500/10 border-red-500/30',
-      textClass: 'text-red-400',
-      roleLabel: dict.play.impostor,
-      IconComponent: MaskIcon,
-    };
-  }
-  
-  if (isDetective) {
-    return {
-      bgClass: 'bg-blue-500/10 border-blue-500/30',
-      textClass: 'text-blue-400',
-      roleLabel: dict.play.detective || 'Detective',
-      IconComponent: DetectiveIcon,
-    };
-  }
-  
-  if (isJoker) {
-    return {
-      bgClass: 'bg-yellow-500/10 border-yellow-500/30',
-      textClass: 'text-yellow-400',
-      roleLabel: dict.play.joker || 'Joker',
-      IconComponent: JokerIcon,
-    };
-  }
-
-  return {
-    bgClass: 'bg-emerald-500/10 border-emerald-500/30',
+const ROLE_STYLES: Record<RoleType, Omit<RoleStyleInfo, 'label' | 'Icon'> & { Icon: React.ComponentType<any>; defaultLabel: string }> = {
+  impostor: {
+    borderClass: 'border-red-500/30',
+    bgClass: 'bg-red-500/10',
+    iconBgClass: 'bg-red-500/20',
+    textClass: 'text-red-400',
+    Icon: MaskIcon,
+    defaultLabel: 'Impostor',
+  },
+  detective: {
+    borderClass: 'border-blue-500/30',
+    bgClass: 'bg-blue-500/10',
+    iconBgClass: 'bg-blue-500/20',
+    textClass: 'text-blue-400',
+    Icon: DetectiveIcon,
+    defaultLabel: 'Detective',
+  },
+  joker: {
+    borderClass: 'border-yellow-500/30',
+    bgClass: 'bg-yellow-500/10',
+    iconBgClass: 'bg-yellow-500/20',
+    textClass: 'text-yellow-400',
+    Icon: JokerIcon,
+    defaultLabel: 'Joker',
+  },
+  civilian: {
+    borderClass: 'border-emerald-500/30',
+    bgClass: 'bg-emerald-500/10',
+    iconBgClass: 'bg-emerald-500/20',
     textClass: 'text-emerald-400',
-    roleLabel: dict.play.civilian,
-    IconComponent: UserIcon,
+    Icon: UserIcon,
+    defaultLabel: 'Civilian',
+  },
+};
+
+/**
+ * Get styling info for a role
+ * @param role - The role type (civilian, impostor, detective, joker)
+ * @param labels - Optional custom labels for each role (from dictionary)
+ */
+export function getRoleStyleInfo(
+  role: RoleType | string | null | undefined,
+  labels?: RoleLabels
+): RoleStyleInfo {
+  const normalizedRole = (role || 'civilian') as RoleType;
+  const styles = ROLE_STYLES[normalizedRole] || ROLE_STYLES.civilian;
+  
+  return {
+    ...styles,
+    label: labels?.[normalizedRole] || styles.defaultLabel,
   };
 }

@@ -218,9 +218,6 @@ export default function RevealPage() {
           <RevealCard
             onRevealed={handleRevealed}
             hasRevealed={hasRevealed}
-            slideText={dict.reveal.slideToReveal}
-            holdText={dict.reveal.holdToSee}
-            revealAgainText={dict.reveal.slideToRevealAgain}
           >
             <RevealedContent
               role={currentPlayer.role || 'civilian'}

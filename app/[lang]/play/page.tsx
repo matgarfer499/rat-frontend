@@ -27,7 +27,6 @@ export default function PlayPage() {
   const [votedPlayerId, setVotedPlayerId] = useState<string | null>(null);
   
   // Game rules from setup
-  const [votingTime, setVotingTime] = useState(60);
   const [discussionTimerEnabled, setDiscussionTimerEnabled] = useState(false);
   const [discussionTime, setDiscussionTime] = useState(300);
   
@@ -58,11 +57,9 @@ export default function PlayPage() {
     if (storedJokerId) setJokerId(storedJokerId);
     
     // Load game rules
-    const storedVotingTime = sessionStorage.getItem('votingTime');
     const storedDiscussionEnabled = sessionStorage.getItem('discussionTimerEnabled');
     const storedDiscussionTime = sessionStorage.getItem('discussionTime');
     
-    if (storedVotingTime) setVotingTime(parseInt(storedVotingTime, 10));
     if (storedDiscussionEnabled) {
       const enabled = storedDiscussionEnabled === 'true';
       setDiscussionTimerEnabled(enabled);

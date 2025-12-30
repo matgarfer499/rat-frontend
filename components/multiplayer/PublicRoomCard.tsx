@@ -2,13 +2,10 @@
 
 import { motion } from 'framer-motion';
 import { UsersIcon, HashIcon, LockIcon, DoorEnterIcon } from '@components/icons';
+import type { PublicRoom } from '@/types/room';
 
 interface PublicRoomCardProps {
-  room: {
-    id: string;
-    player_count: number;
-    max_players: number;
-  };
+  room: PublicRoom;
   index: number;
   loading: boolean;
   onJoin: (roomId: string) => void;

@@ -1,10 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { VotingTimer } from '@components/game/VotingTimer';
 import { VotePlayerCard } from '@components/game/VotePlayerCard';
-import { ActionButton } from '@components/ui/ActionButton';
 import { CheckIcon } from '@components/icons';
 
 interface Player {

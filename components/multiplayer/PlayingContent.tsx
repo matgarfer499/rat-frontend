@@ -1,16 +1,9 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ActionButton } from '@components/ui/ActionButton';
-import {
-  ClockIcon,
-  CheckIcon,
-  UserIcon,
-  MaskIcon,
-  DetectiveIcon,
-  JokerIcon,
-} from '@components/icons';
+import { useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { ClockIcon, CheckIcon } from '@components/icons';
+import { getRoleStyleInfo } from '@lib/game-utils';
 
 interface Player {
   id: string;
@@ -84,48 +77,14 @@ export function PlayingContent({
   };
 
   const time = formatTime(timeRemaining);
-  const progressPercent = discussionTime > 0 ? (timeRemaining / discussionTime) * 100 : 0;
 
-  // Get role info for current player
-  const getRoleInfo = () => {
-    const role = currentPlayer?.role;
-    
-    if (role === 'impostor') {
-      return {
-        borderClass: 'border-red-500/30',
-        bgClass: 'bg-red-500/10',
-        textClass: 'text-red-400',
-        Icon: MaskIcon,
-        label: dict?.play?.impostor || 'Impostor',
-      };
-    } else if (role === 'detective') {
-      return {
-        borderClass: 'border-blue-500/30',
-        bgClass: 'bg-blue-500/10',
-        textClass: 'text-blue-400',
-        Icon: DetectiveIcon,
-        label: dict?.play?.detective || 'Detective',
-      };
-    } else if (role === 'joker') {
-      return {
-        borderClass: 'border-yellow-500/30',
-        bgClass: 'bg-yellow-500/10',
-        textClass: 'text-yellow-400',
-        Icon: JokerIcon,
-        label: dict?.play?.joker || 'Joker',
-      };
-    } else {
-      return {
-        borderClass: 'border-emerald-500/30',
-        bgClass: 'bg-emerald-500/10',
-        textClass: 'text-emerald-400',
-        Icon: UserIcon,
-        label: dict?.play?.civilian || 'Civilian',
-      };
-    }
-  };
-
-  const roleInfo = getRoleInfo();
+  // Get role info for current player using shared utility
+  const roleInfo = getRoleStyleInfo(currentPlayer?.role, {
+    civilian: dict?.play?.civilian,
+    impostor: dict?.play?.impostor,
+    detective: dict?.play?.detective,
+    joker: dict?.play?.joker,
+  });
   const RoleIcon = roleInfo.Icon;
 
   return (

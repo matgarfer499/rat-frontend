@@ -2,7 +2,7 @@
  * API client for room operations
  */
 
-import type { Room } from '@/types/room';
+import type { Room, PublicRoom } from '@/types/room';
 import { apiFetch, getApiHeaders, API_BASE_URL } from './fetch-helper';
 
 export interface CreateRoomRequest {
@@ -23,12 +23,8 @@ export interface RoomResponse {
   has_password: boolean;
 }
 
-export interface PublicRoom {
-  id: string;
-  player_count: number;
-  max_players: number;
-  category_ids: number[];
-}
+// Re-export PublicRoom from types/room.ts for convenience
+export type { PublicRoom };
 
 export interface JoinRoomRequest {
   username: string;
@@ -128,13 +124,6 @@ export async function checkRoom(roomId: string): Promise<CheckRoomResponse> {
   }
 
   return response.json();
-}
-
-/**
- * Get Socket.IO connection URL
- */
-export function getSocketURL(): string {
-  return API_BASE_URL;
 }
 
 /**

@@ -48,7 +48,6 @@ interface Category {
 interface LobbyContentProps {
   room: Room;
   currentPlayerId: string;
-  username: string;
   lang: string;
   votingTime: number;
   discussionTimerEnabled: boolean;
@@ -64,19 +63,16 @@ interface LobbyContentProps {
   onCategoriesChange: (categories: number[]) => void;
   onStartGame: () => void;
   onLeaveRoom: () => void;
-  onShareCode: () => void;
   onShareLink: () => void;
   onToggleReady: () => void;
   shareMessage: string;
   dict: any;
 }
 
-const DEFAULT_VOTING_TIME = 60;
 const MIN_VOTING_TIME = 15;
 const MAX_VOTING_TIME = 180;
 const VOTING_TIME_STEP = 15;
 
-const DEFAULT_DISCUSSION_TIME = 300;
 const MIN_DISCUSSION_TIME = 60;
 const MAX_DISCUSSION_TIME = 600;
 const DISCUSSION_TIME_STEP = 30;
@@ -84,7 +80,6 @@ const DISCUSSION_TIME_STEP = 30;
 export function LobbyContent({
   room,
   currentPlayerId,
-  username,
   lang,
   votingTime,
   discussionTimerEnabled,
@@ -100,7 +95,6 @@ export function LobbyContent({
   onCategoriesChange,
   onStartGame,
   onLeaveRoom,
-  onShareCode,
   onShareLink,
   onToggleReady,
   shareMessage,
@@ -113,7 +107,6 @@ export function LobbyContent({
 
   const isHost = currentPlayerId === room.host_id;
   const playersList = Object.values(room.players);
-  const readyCount = playersList.filter(p => p.is_ready).length;
   const allPlayersReady = playersList.length >= 3 && playersList.every(p => p.is_ready);
   const emptySlots = room.max_players - playersList.length;
 

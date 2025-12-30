@@ -46,9 +46,7 @@ export function RevealPhase({
   onPlayAgain,
   onBackToLobby,
   dict,
-}: RevealPhaseProps) {
-  const votedPlayer = votedPlayerId ? players.find((p) => p.id === votedPlayerId) : null;
-  
+}: RevealPhaseProps) {  
   // Determine winner based on who was voted
   const votedPlayerIsImpostor = votedPlayerId === impostorId;
   const votedPlayerIsJoker = votedPlayerId === jokerId;

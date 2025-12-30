@@ -6,9 +6,6 @@ import { motion, useMotionValue, useTransform, useAnimation, PanInfo } from 'fra
 interface RevealCardProps {
   onRevealed: () => void;
   hasRevealed: boolean;
-  slideText: string;
-  holdText: string;
-  revealAgainText: string;
   children: React.ReactNode;
 }
 
@@ -17,9 +14,6 @@ const REVEAL_THRESHOLD = -120;
 export function RevealCard({
   onRevealed,
   hasRevealed,
-  slideText,
-  holdText,
-  revealAgainText,
   children,
 }: RevealCardProps) {
   const [isRevealing, setIsRevealing] = useState(false);

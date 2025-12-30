@@ -5,7 +5,7 @@ import { ResultBanner } from '@components/game/ResultBanner';
 import { PlayerRoleCard } from '@components/game/PlayerRoleCard';
 import { ActionButton } from '@components/ui/ActionButton';
 import { MaskIcon, RefreshIcon } from '@components/icons';
-import { Card } from '@components/ui';
+import type { GameState } from '@/types/room';
 
 interface Player {
   id: string;
@@ -13,19 +13,10 @@ interface Player {
   role?: string | null;
 }
 
-interface GameState {
-  word: string;
-  impostor_id: string;
-  detective_id?: string | null;
-  joker_id?: string | null;
-  most_voted_id?: string | null;
-  result?: string | null;
-}
-
 interface ResultsContentProps {
   players: Player[];
   currentPlayerId: string;
-  gameState: GameState;
+  gameState: Pick<GameState, 'word' | 'impostor_id' | 'detective_id' | 'joker_id' | 'most_voted_id' | 'result'>;
   isHost: boolean;
   onPlayAgain: () => void;
   dict: any;

@@ -3,12 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { PublicRoomCard } from './PublicRoomCard';
 import { UsersIcon, RefreshIcon } from '@components/icons';
-
-interface PublicRoom {
-  id: string;
-  player_count: number;
-  max_players: number;
-}
+import type { PublicRoom } from '@/types/room';
 
 interface PublicRoomsListProps {
   rooms: PublicRoom[];

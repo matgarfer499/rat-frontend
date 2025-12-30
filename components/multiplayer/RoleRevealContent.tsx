@@ -2,12 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Card } from '@components/ui';
-import {
-  UserIcon,
-  MaskIcon,
-  DetectiveIcon,
-  JokerIcon,
-} from '@components/icons';
+import { getRoleStyleInfo } from '@lib/game-utils';
 
 interface Player {
   id: string;
@@ -27,49 +22,43 @@ export function RoleRevealContent({
   timeRemaining,
   dict,
 }: RoleRevealContentProps) {
-  const getRoleInfo = () => {
+  // Extended role info with gradient borders and hints for role reveal
+  const getRoleRevealInfo = () => {
     const role = currentPlayer?.role;
     
-    if (role === 'impostor') {
-      return {
-        borderClass: 'border-red-500/50 bg-gradient-to-br from-red-900/20 to-red-700/20',
-        iconBgClass: 'bg-red-500/20',
-        textClass: 'text-red-400',
-        Icon: MaskIcon,
-        label: dict?.reveal?.youAreImpostor || 'IMPOSTOR',
-        hint: dict?.reveal?.impostorHint || "You don't know the word. Blend in!",
-      };
-    } else if (role === 'detective') {
-      return {
-        borderClass: 'border-blue-500/50 bg-gradient-to-br from-blue-900/20 to-blue-700/20',
-        iconBgClass: 'bg-blue-500/20',
-        textClass: 'text-blue-400',
-        Icon: DetectiveIcon,
-        label: dict?.reveal?.youAreDetective || 'DETECTIVE',
-        hint: dict?.reveal?.detectiveHint || 'You can ask someone to say more words about the topic.',
-      };
-    } else if (role === 'joker') {
-      return {
-        borderClass: 'border-yellow-500/50 bg-gradient-to-br from-yellow-900/20 to-yellow-700/20',
-        iconBgClass: 'bg-yellow-500/20',
-        textClass: 'text-yellow-400',
-        Icon: JokerIcon,
-        label: dict?.reveal?.youAreJoker || 'JOKER',
-        hint: dict?.reveal?.jokerHint || 'You know the word but want to get voted out!',
-      };
-    } else {
-      return {
-        borderClass: 'border-emerald-500/50 bg-gradient-to-br from-emerald-900/20 to-emerald-700/20',
-        iconBgClass: 'bg-emerald-500/20',
-        textClass: 'text-emerald-400',
-        Icon: UserIcon,
-        label: dict?.reveal?.youAreCivilian || 'CIVILIAN',
-        hint: '',
-      };
-    }
+    const hints: Record<string, string> = {
+      impostor: dict?.reveal?.impostorHint || "You don't know the word. Blend in!",
+      detective: dict?.reveal?.detectiveHint || 'You can ask someone to say more words about the topic.',
+      joker: dict?.reveal?.jokerHint || 'You know the word but want to get voted out!',
+      civilian: '',
+    };
+    
+    const labels: Record<string, string> = {
+      impostor: dict?.reveal?.youAreImpostor || 'IMPOSTOR',
+      detective: dict?.reveal?.youAreDetective || 'DETECTIVE',
+      joker: dict?.reveal?.youAreJoker || 'JOKER',
+      civilian: dict?.reveal?.youAreCivilian || 'CIVILIAN',
+    };
+    
+    const gradientBorders: Record<string, string> = {
+      impostor: 'border-red-500/50 bg-gradient-to-br from-red-900/20 to-red-700/20',
+      detective: 'border-blue-500/50 bg-gradient-to-br from-blue-900/20 to-blue-700/20',
+      joker: 'border-yellow-500/50 bg-gradient-to-br from-yellow-900/20 to-yellow-700/20',
+      civilian: 'border-emerald-500/50 bg-gradient-to-br from-emerald-900/20 to-emerald-700/20',
+    };
+    
+    const normalizedRole = role || 'civilian';
+    const baseInfo = getRoleStyleInfo(normalizedRole);
+    
+    return {
+      ...baseInfo,
+      gradientBorderClass: gradientBorders[normalizedRole] || gradientBorders.civilian,
+      label: labels[normalizedRole] || baseInfo.label,
+      hint: hints[normalizedRole] || '',
+    };
   };
 
-  const roleInfo = getRoleInfo();
+  const roleInfo = getRoleRevealInfo();
   const RoleIcon = roleInfo.Icon;
 
   return (
@@ -89,7 +78,7 @@ export function RoleRevealContent({
         </motion.div>
 
         {/* Role Card */}
-        <Card variant="glass" className={`p-8 ${roleInfo.borderClass}`}>
+        <Card variant="glass" className={`p-8 ${roleInfo.gradientBorderClass}`}>
           <div className="space-y-6">
             <motion.div
               initial={{ scale: 0, rotate: -180 }}

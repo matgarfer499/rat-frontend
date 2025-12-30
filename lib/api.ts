@@ -25,28 +25,6 @@ export async function fetchCategories(): Promise<CategoryWithTranslations[]> {
   return categoriesWithTranslations;
 }
 
-export async function fetchWordsByCategory(categoryId: number): Promise<WordWithTranslations[]> {
-  const response = await apiFetch(`/words/?category_id=${categoryId}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch words');
-  }
-  
-  const words = await response.json();
-  
-  // Fetch translations for each word
-  const wordsWithTranslations = await Promise.all(
-    words.map(async (word: { id: number }) => {
-      const translationsResponse = await apiFetch(
-        `/words/${word.id}/translations`
-      );
-      const translations = await translationsResponse.json();
-      return { ...word, translations };
-    })
-  );
-  
-  return wordsWithTranslations;
-}
-
 export async function getRandomWord(
   categoryIds: number[],
   language: string

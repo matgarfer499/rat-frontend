@@ -1,4 +1,5 @@
 import { SearchIcon, CheckIcon, RandomIcon } from '@components/icons';
+import { Input } from '@components/ui/Input';
 
 interface CategoryFiltersProps {
   searchQuery: string;
@@ -30,21 +31,14 @@ export function CategoryFilters({
     <>
       {/* Search Bar */}
       <div className="px-4 py-4 mt-2">
-        <label className="flex flex-col h-12 w-full group">
-          <div className="flex w-full flex-1 items-stretch rounded-xl bg-surface-light dark:bg-surface-dark shadow-sm ring-1 ring-slate-200 dark:ring-transparent group-focus-within:ring-2 group-focus-within:ring-primary transition-all">
-            <div className="flex items-center justify-center pl-4 text-slate-400 dark:text-slate-500">
-              <SearchIcon size={24} />
-            </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              disabled={disabled}
-              className="flex w-full min-w-0 flex-1 bg-transparent px-4 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none text-base font-normal h-full rounded-xl border-none focus:ring-0"
-              placeholder={texts.searchPlaceholder}
-            />
-          </div>
-        </label>
+        <Input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          disabled={disabled}
+          icon={<SearchIcon size={24} />}
+          placeholder={texts.searchPlaceholder}
+        />
       </div>
 
       {/* Quick Action Chips */}

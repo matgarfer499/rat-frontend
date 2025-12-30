@@ -1,6 +1,6 @@
 'use client';
 
-import { UserIcon, CheckIcon } from '@components/icons';
+import { CheckIcon } from '@components/icons';
 
 interface VotePlayerCardProps {
   playerId: string;

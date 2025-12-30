@@ -16,15 +16,6 @@ import { ResultsContent } from '@components/multiplayer/ResultsContent';
 import { ArrowLeftIcon } from '@components/icons';
 import type { Room, Player } from '@/types/room';
 
-interface Category {
-  id: number;
-  key: string;
-  translations: Array<{
-    language: string;
-    name: string;
-  }>;
-}
-
 // Game timing constants (should match backend)
 const ROLE_REVEAL_DURATION = 10;
 const PLAYING_DURATION = 300; // 5 minutes
@@ -32,14 +23,8 @@ const VOTING_DURATION = 30;
 
 // Time constants for settings
 const DEFAULT_VOTING_TIME = 60;
-const MIN_VOTING_TIME = 15;
-const MAX_VOTING_TIME = 180;
-const VOTING_TIME_STEP = 15;
 
 const DEFAULT_DISCUSSION_TIME = 300;
-const MIN_DISCUSSION_TIME = 60;
-const MAX_DISCUSSION_TIME = 600;
-const DISCUSSION_TIME_STEP = 30;
 
 export default function GameRoomPage() {
   const router = useRouter();
@@ -56,9 +41,7 @@ export default function GameRoomPage() {
   const [shareMessage, setShareMessage] = useState<string>('');
   
   // Categories
-  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<number[]>([1]);
-  const [loadingCategories, setLoadingCategories] = useState(true);
   
   // Host settings (only for host)
   const [votingTime, setVotingTime] = useState(DEFAULT_VOTING_TIME);
@@ -101,17 +84,14 @@ export default function GameRoomPage() {
         ]);
         console.log('📦 Initial room data loaded:', roomData);
         setRoom(roomData);
-        setCategories(categoriesData);
         if (categoriesData.length > 0) {
           setSelectedCategories([categoriesData[0].id]);
         }
         setLoading(false);
-        setLoadingCategories(false);
       } catch (err) {
         console.error('Failed to load room:', err);
         setError(dict?.multiplayer?.roomNotFound || 'Room not found');
         setLoading(false);
-        setLoadingCategories(false);
       }
     };
 
@@ -270,11 +250,6 @@ export default function GameRoomPage() {
     router.push(`/${lang}/multiplayer`);
   };
 
-  const handleEditUsername = () => {
-    setNewUsername(username);
-    setShowEditUsername(true);
-  };
-
   const handleSaveUsername = () => {
     const trimmedUsername = newUsername.trim();
     
@@ -326,13 +301,6 @@ export default function GameRoomPage() {
     emit('toggle_ready', { room_id: roomId });
   };
 
-  // Format time as MM:SS
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
   if (!dict) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -375,9 +343,6 @@ export default function GameRoomPage() {
   const isHost = room && currentPlayerId === room.host_id;
   const playersList: Player[] = room && room.players ? Object.values(room.players) : [];
   const currentPlayer = playersList.find(p => p.id === currentPlayerId);
-  const readyCount = playersList.filter(p => p.is_ready).length;
-  const allPlayersReady = playersList.length > 0 && playersList.every(p => p.is_ready);
-  const wantsToVoteCount = playersList.filter(p => p.wants_to_vote).length;
 
   // Render based on game phase
   const renderPhaseContent = () => {
@@ -402,7 +367,6 @@ export default function GameRoomPage() {
       <LobbyContent
         room={room}
         currentPlayerId={currentPlayerId}
-        username={username}
         lang={lang}
         votingTime={votingTime}
         discussionTimerEnabled={discussionTimerEnabled}
@@ -418,7 +382,6 @@ export default function GameRoomPage() {
         onCategoriesChange={setSelectedCategories}
         onStartGame={handleStartGame}
         onLeaveRoom={handleLeaveRoom}
-        onShareCode={handleCopyRoomCode}
         onShareLink={handleCopyRoomLink}
         onToggleReady={handleToggleReady}
         shareMessage={shareMessage}
