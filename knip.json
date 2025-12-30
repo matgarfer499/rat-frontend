@@ -1,0 +1,22 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "app/**/page.tsx",
+    "app/**/layout.tsx",
+    "middleware.ts"
+  ],
+  "project": [
+    "**/*.{ts,tsx}",
+    "!**/*.d.ts"
+  ],
+  "ignore": [
+    "**/*.d.ts",
+    ".next/**"
+  ],
+  "ignoreDependencies": [
+    "@tailwindcss/postcss",
+    "postcss"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "next": true
+}

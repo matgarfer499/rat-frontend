@@ -13,6 +13,22 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  // Custom rules for unused code detection (warnings, not errors)
+  {
+    rules: {
+      // Warn on unused variables (except those prefixed with _)
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+      // Warn on unused imports
+      "no-unused-vars": "off", // Turn off base rule (using TS version)
+    },
+  },
 ]);
 
 export default eslintConfig;

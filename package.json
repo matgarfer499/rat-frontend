@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "knip": "knip",
+    "knip:fix": "knip --fix --format"
   },
   "dependencies": {
     "@formatjs/intl-localematcher": "^0.6.2",
@@ -26,6 +28,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.0.4",
+    "knip": "^5",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
