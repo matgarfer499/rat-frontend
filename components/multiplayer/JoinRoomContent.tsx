@@ -80,8 +80,9 @@ export function JoinRoomContent() {
         // Public room - join directly
         await handleJoinRoom(roomId, usernameToUse);
       }
-    } catch (error: any) {
-      alert(error.message || dict?.multiplayer?.roomNotFound || 'Room not found');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : (dict?.multiplayer?.roomNotFound || 'Room not found');
+      alert(errorMessage);
       setLoading(false);
     }
   };
@@ -119,8 +120,8 @@ export function JoinRoomContent() {
       
       router.push(`/${lang}/multiplayer/room/${response.room_id}`);
       
-    } catch (error: any) {
-      const errorMessage = error.message || dict?.multiplayer?.error || 'Error joining room';
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : (dict?.multiplayer?.error || 'Error joining room');
       
       if (errorMessage.toLowerCase().includes('password')) {
         setPasswordError(dict?.multiplayer?.invalidPassword || 'Invalid password');

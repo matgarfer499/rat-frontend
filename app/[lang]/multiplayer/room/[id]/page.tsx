@@ -35,7 +35,12 @@ export default function GameRoomPage() {
   
   const [room, setRoom] = useState<Room | null>(null);
   const [currentPlayerId, setCurrentPlayerId] = useState<string>('');
-  const [username, setUsername] = useState<string>('');
+  const [username, setUsername] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('temp_username') || '';
+    }
+    return '';
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [shareMessage, setShareMessage] = useState<string>('');
@@ -73,8 +78,6 @@ export default function GameRoomPage() {
       router.push(`/${lang}/multiplayer`);
       return;
     }
-
-    setUsername(storedUsername);
     
     const loadData = async () => {
       try {
@@ -194,7 +197,6 @@ export default function GameRoomPage() {
   // Timer effect for game phases
   useEffect(() => {
     if (!room || !room.game_state) {
-      setTimeRemaining(0);
       return;
     }
 
@@ -212,7 +214,6 @@ export default function GameRoomPage() {
         duration = VOTING_DURATION * 1000;
         break;
       default:
-        setTimeRemaining(0);
         return;
     }
 
@@ -228,12 +229,6 @@ export default function GameRoomPage() {
 
     return () => clearInterval(interval);
   }, [room]);
-
-  const handleCopyRoomCode = () => {
-    navigator.clipboard.writeText(roomId);
-    setShareMessage(dict?.multiplayer?.copyCode || 'Code copied!');
-    setTimeout(() => setShareMessage(''), 2000);
-  };
 
   const handleCopyRoomLink = () => {
     const link = `${window.location.origin}/${lang}/multiplayer/join?code=${roomId}`;

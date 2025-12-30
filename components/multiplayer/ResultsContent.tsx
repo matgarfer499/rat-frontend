@@ -19,7 +19,7 @@ interface ResultsContentProps {
   gameState: Pick<GameState, 'word' | 'impostor_id' | 'detective_id' | 'joker_id' | 'most_voted_id' | 'result'>;
   isHost: boolean;
   onPlayAgain: () => void;
-  dict: any;
+  dict: Record<string, any>;
 }
 
 export function ResultsContent({

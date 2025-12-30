@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { match as matchLocale } from '@formatjs/intl-localematcher'
 import Negotiator from 'negotiator'
-import { i18n } from './i18n/config'
+import { i18n, type Locale } from './i18n/config'
 
 function getLocale(request: NextRequest): string {
   // Check if user has a saved locale preference in cookie
   const cookieLocale = request.cookies.get('NEXT_LOCALE')?.value
-  if (cookieLocale && i18n.locales.includes(cookieLocale as any)) {
+  if (cookieLocale && i18n.locales.includes(cookieLocale as Locale)) {
     return cookieLocale
   }
 

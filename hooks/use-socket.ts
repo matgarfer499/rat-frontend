@@ -78,7 +78,7 @@ export function useSocket(url?: string, options: UseSocketOptions = {}): SocketH
     }
   }, []);
 
-  const emit = useCallback((event: string, data?: any) => {
+  const emit = useCallback((event: string, data?: unknown) => {
     if (socketRef.current?.connected) {
       socketRef.current.emit(event, data);
     } else {
@@ -114,8 +114,11 @@ export function useSocket(url?: string, options: UseSocketOptions = {}): SocketH
     };
   }, [autoConnect, connect, disconnect]);
 
+  // Función para obtener el socket (evita acceso a ref durante render)
+  const getSocket = () => socketRef.current;
+
   return {
-    socket: socketRef.current,
+    socket: getSocket(),
     isConnected,
     connect,
     disconnect,

@@ -37,14 +37,13 @@ interface PlayingContentProps {
   timeRemaining: number;
   discussionTime: number;
   onRequestVote: () => void;
-  dict: any;
+  dict: Record<string, any>;
 }
 
 export function PlayingContent({
   room,
   currentPlayerId,
   timeRemaining,
-  discussionTime,
   onRequestVote,
   dict,
 }: PlayingContentProps) {
@@ -60,14 +59,15 @@ export function PlayingContent({
     : null;
 
   // Create turn order based on starting player
+  const startingPlayerId = room.game_state?.starting_player_id;
   const turnOrder = useMemo(() => {
-    if (!room.game_state?.starting_player_id) return playersList;
+    if (!startingPlayerId) return playersList;
     
-    const startIndex = playersList.findIndex(p => p.id === room.game_state?.starting_player_id);
+    const startIndex = playersList.findIndex(p => p.id === startingPlayerId);
     if (startIndex === -1) return playersList;
     
     return [...playersList.slice(startIndex), ...playersList.slice(0, startIndex)];
-  }, [playersList, room.game_state?.starting_player_id]);
+  }, [playersList, startingPlayerId]);
 
   // Format time as MM:SS
   const formatTime = (seconds: number) => {

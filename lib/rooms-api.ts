@@ -3,7 +3,7 @@
  */
 
 import type { Room, PublicRoom } from '@/types/room';
-import { apiFetch, getApiHeaders, API_BASE_URL } from './fetch-helper';
+import { apiFetch, getApiHeaders } from './fetch-helper';
 
 export interface CreateRoomRequest {
   username: string;

@@ -66,7 +66,7 @@ interface LobbyContentProps {
   onShareLink: () => void;
   onToggleReady: () => void;
   shareMessage: string;
-  dict: any;
+  dict: Record<string, any>;
 }
 
 const MIN_VOTING_TIME = 15;

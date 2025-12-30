@@ -19,7 +19,7 @@ interface VotingContentProps {
   hasVoted: boolean;
   selectedVote: string;
   onVote: (playerId: string) => void;
-  dict: any;
+  dict: Record<string, any>;
 }
 
 export function VotingContent({

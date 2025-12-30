@@ -22,7 +22,8 @@ export function LanguageSelector() {
     
     // Use View Transitions API if available
     if (typeof document !== 'undefined' && 'startViewTransition' in document) {
-      (document as any).startViewTransition(() => {
+      const doc = document as Document & { startViewTransition: (callback: () => void) => void };
+      doc.startViewTransition(() => {
         startTransition(() => {
           router.push(newPath);
         });

@@ -14,7 +14,7 @@ interface Player {
 interface RoleRevealContentProps {
   currentPlayer: Player | null;
   timeRemaining: number;
-  dict: any;
+  dict: Record<string, any>;
 }
 
 export function RoleRevealContent({

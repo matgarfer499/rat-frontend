@@ -32,7 +32,7 @@ export interface RoleLabels {
   joker?: string;
 }
 
-const ROLE_STYLES: Record<RoleType, Omit<RoleStyleInfo, 'label' | 'Icon'> & { Icon: React.ComponentType<any>; defaultLabel: string }> = {
+const ROLE_STYLES: Record<RoleType, Omit<RoleStyleInfo, 'label' | 'Icon'> & { Icon: React.ComponentType<{ size?: number; className?: string }>; defaultLabel: string }> = {
   impostor: {
     borderClass: 'border-red-500/30',
     bgClass: 'bg-red-500/10',
