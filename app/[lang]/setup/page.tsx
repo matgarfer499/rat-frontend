@@ -10,11 +10,12 @@ import { PlayerInput } from '@components/ui/PlayerInput';
 import { RangeSlider } from '@components/ui/RangeSlider';
 import { RoleToggle } from '@components/ui/RoleToggle';
 import { ToggleCard } from '@components/ui/ToggleCard';
+import { ImpostorConfig } from '@components/ui/ImpostorConfig';
 import { ArrowLeftIcon, UsersIcon, ClockIcon, MaskIcon, DetectiveIcon, JokerIcon, PlayIcon } from '@components/icons';
 import { ActionButton } from '@components/ui/ActionButton';
 
 const MIN_PLAYERS = 3;
-const MAX_PLAYERS = 12;
+const MAX_PLAYERS = 24;
 
 // Time constants (in seconds)
 const DEFAULT_VOTING_TIME = 30;
@@ -46,6 +47,18 @@ export default function SetupPage() {
   // Special roles state
   const [detectiveEnabled, setDetectiveEnabled] = useState(false);
   const [jokerEnabled, setJokerEnabled] = useState(false);
+  
+  // Impostors configuration
+  const [impostorCount, setImpostorCount] = useState(1);
+  const [randomImpostorsMode, setRandomImpostorsMode] = useState(false);
+
+  // Calculate max impostors based on player count (1/3 rule starting from 5 players)
+  const getMaxImpostors = (playerCount: number): number => {
+    if (playerCount < 5) return 1;
+    return Math.floor(playerCount / 3);
+  };
+
+  const maxImpostors = getMaxImpostors(playerCount);
 
   const handlePlayerCountChange = (count: number) => {
     setPlayerCount(count);
@@ -56,6 +69,12 @@ export default function SetupPage() {
       });
       return newNames;
     });
+    
+    // Adjust impostor count if it exceeds the new maximum
+    if (!randomImpostorsMode && impostorCount > getMaxImpostors(count)) {
+      setImpostorCount(getMaxImpostors(count));
+    }
+    
     // Clear errors when count changes
     setErrors([]);
     setGeneralError('');
@@ -150,6 +169,10 @@ export default function SetupPage() {
     // Store special roles
     sessionStorage.setItem('detectiveEnabled', String(detectiveEnabled));
     sessionStorage.setItem('jokerEnabled', String(jokerEnabled));
+    
+    // Store impostor configuration
+    sessionStorage.setItem('impostorCount', String(impostorCount));
+    sessionStorage.setItem('randomImpostorsMode', String(randomImpostorsMode));
 
     router.push(`/${lang}/categories`);
   };
@@ -288,6 +311,23 @@ export default function SetupPage() {
         </h3>
 
         <div className="grid grid-cols-1 gap-3">
+          {/* Impostor Configuration */}
+          <ImpostorConfig
+            count={impostorCount}
+            maxCount={randomImpostorsMode ? playerCount : maxImpostors}
+            randomMode={randomImpostorsMode}
+            onCountChange={setImpostorCount}
+            onRandomModeChange={(checked) => {
+              setRandomImpostorsMode(checked);
+              if (!checked && impostorCount > maxImpostors) {
+                setImpostorCount(maxImpostors);
+              }
+            }}
+            label={dict.setup.impostorCount || 'Impostores'}
+            randomModeLabel={dict.setup.randomImpostorsMode || 'Modo Aleatorio'}
+            randomModeDesc={dict.setup.randomImpostorsModeDesc || '¡Modo locura! De 1 a TODOS pueden ser impostores'}
+          />
+
           {/* Detective role */}
           <RoleToggle
             checked={detectiveEnabled}

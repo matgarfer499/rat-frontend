@@ -19,7 +19,7 @@ export default function RevealPage() {
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [hasRevealed, setHasRevealed] = useState(false);
   const [gameWord, setGameWord] = useState<string | null>(null);
-  const [impostorId, setImpostorId] = useState<string | null>(null);
+  const [impostorIds, setImpostorIds] = useState<string[]>([]);
   const [detectiveId, setDetectiveId] = useState<string | null>(null);
   const [jokerId, setJokerId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,6 +31,8 @@ export default function RevealPage() {
       const categoriesData = sessionStorage.getItem('selectedCategories');
       const detectiveEnabled = sessionStorage.getItem('detectiveEnabled') === 'true';
       const jokerEnabled = sessionStorage.getItem('jokerEnabled') === 'true';
+      const impostorCount = parseInt(sessionStorage.getItem('impostorCount') || '1', 10);
+      const randomImpostorsMode = sessionStorage.getItem('randomImpostorsMode') === 'true';
 
       if (!playersData || !categoriesData) {
         router.push(`/${lang}/setup`);
@@ -58,10 +60,23 @@ export default function RevealPage() {
         return availableIndices.splice(randomPos, 1)[0];
       };
 
-      // Assign impostor (always)
-      const impostorIndex = pickRandomIndex();
-      const impostorPlayerId = parsedPlayers[impostorIndex].id;
-      setImpostorId(impostorPlayerId);
+      // Assign impostors
+      const impostorPlayerIds: string[] = [];
+      let actualImpostorCount: number;
+      
+      if (randomImpostorsMode) {
+        // In random mode, choose a random number between 1 and total players
+        actualImpostorCount = Math.floor(Math.random() * parsedPlayers.length) + 1;
+      } else {
+        // In normal mode, use the configured count
+        actualImpostorCount = impostorCount;
+      }
+      
+      for (let i = 0; i < actualImpostorCount && availableIndices.length > 0; i++) {
+        const impostorIndex = pickRandomIndex();
+        impostorPlayerIds.push(parsedPlayers[impostorIndex].id);
+      }
+      setImpostorIds(impostorPlayerIds);
 
       // Assign detective if enabled and enough players
       let detectivePlayerId: string | null = null;
@@ -84,7 +99,7 @@ export default function RevealPage() {
         let role: PlayerRole = 'civilian';
         let word: string | undefined = wordData.word;
 
-        if (player.id === impostorPlayerId) {
+        if (impostorPlayerIds.includes(player.id)) {
           role = 'impostor';
           word = undefined; // Impostor doesn't know the word
         } else if (player.id === detectivePlayerId) {
@@ -123,7 +138,7 @@ export default function RevealPage() {
       setHasRevealed(false);
     } else {
       sessionStorage.setItem('gameWord', gameWord || '');
-      sessionStorage.setItem('impostorId', impostorId || '');
+      sessionStorage.setItem('impostorIds', JSON.stringify(impostorIds));
       sessionStorage.setItem('detectiveId', detectiveId || '');
       sessionStorage.setItem('jokerId', jokerId || '');
       sessionStorage.setItem('gamePlayers', JSON.stringify(players));

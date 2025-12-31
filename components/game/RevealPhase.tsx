@@ -7,7 +7,7 @@ import { PlayerRoleCard } from './PlayerRoleCard';
 interface RevealPhaseProps {
   players: Player[];
   gameWord: string;
-  impostorId: string;
+  impostorIds: string[];
   detectiveId: string | null;
   jokerId: string | null;
   votedPlayerId: string | null;
@@ -40,7 +40,7 @@ interface RevealPhaseProps {
 export function RevealPhase({
   players,
   gameWord,
-  impostorId,
+  impostorIds,
   detectiveId,
   jokerId,
   votedPlayerId,
@@ -49,7 +49,7 @@ export function RevealPhase({
   dict,
 }: RevealPhaseProps) {  
   // Determine winner based on who was voted
-  const votedPlayerIsImpostor = votedPlayerId === impostorId;
+  const votedPlayerIsImpostor = votedPlayerId ? impostorIds.includes(votedPlayerId) : false;
   const votedPlayerIsJoker = votedPlayerId === jokerId;
   const votedPlayerIsCivilian = votedPlayerId && !votedPlayerIsImpostor && !votedPlayerIsJoker;
   
@@ -69,15 +69,8 @@ export function RevealPhase({
     iconColor = 'text-red-400';
   }
 
-  const getRoleLabel = (playerId: string) => {
-    if (playerId === impostorId) return dict.impostor;
-    if (playerId === detectiveId) return dict.detective || 'Detective';
-    if (playerId === jokerId) return dict.joker || 'Joker';
-    return dict.civilian;
-  };
-
   const getPlayerRole = (playerId: string): 'civilian' | 'impostor' | 'detective' | 'joker' => {
-    if (playerId === impostorId) return 'impostor';
+    if (impostorIds.includes(playerId)) return 'impostor';
     if (playerId === detectiveId) return 'detective';
     if (playerId === jokerId) return 'joker';
     return 'civilian';

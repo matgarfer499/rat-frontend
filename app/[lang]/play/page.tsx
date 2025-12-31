@@ -19,7 +19,7 @@ export default function PlayPage() {
   const dict = useDictionary();
   const [players, setPlayers] = useState<Player[]>([]);
   const [gameWord, setGameWord] = useState<string>('');
-  const [impostorId, setImpostorId] = useState<string>('');
+  const [impostorIds, setImpostorIds] = useState<string[]>([]);
   const [detectiveId, setDetectiveId] = useState<string | null>(null);
   const [jokerId, setJokerId] = useState<string | null>(null);
   const [phase, setPhase] = useState<GamePhase>('discussion');
@@ -36,17 +36,18 @@ export default function PlayPage() {
   useEffect(() => {
     const playersData = sessionStorage.getItem('gamePlayers');
     const word = sessionStorage.getItem('gameWord');
-    const impostor = sessionStorage.getItem('impostorId');
+    const impostorsData = sessionStorage.getItem('impostorIds');
 
-    if (!playersData || !word || !impostor) {
+    if (!playersData || !word || !impostorsData) {
       router.push(`/${lang}/setup`);
       return;
     }
 
     const parsedPlayers = JSON.parse(playersData);
+    const parsedImpostorIds = JSON.parse(impostorsData);
     setPlayers(parsedPlayers);
     setGameWord(word);
-    setImpostorId(impostor);
+    setImpostorIds(parsedImpostorIds);
     // Select random starting player
     setStartingPlayerIndex(Math.floor(Math.random() * parsedPlayers.length));
     
@@ -87,7 +88,7 @@ export default function PlayPage() {
     const currentPlayers = players.map(({ id, name }) => ({ id, name }));
     sessionStorage.setItem('gamePlayers', JSON.stringify(currentPlayers));
     sessionStorage.removeItem('gameWord');
-    sessionStorage.removeItem('impostorId');
+    sessionStorage.removeItem('impostorIds');
     sessionStorage.removeItem('selectedCategories');
     router.push(`/${lang}/categories`);
   };
@@ -181,7 +182,7 @@ export default function PlayPage() {
             <RevealPhase
               players={players}
               gameWord={gameWord}
-              impostorId={impostorId}
+              impostorIds={impostorIds}
               detectiveId={detectiveId}
               jokerId={jokerId}
               votedPlayerId={votedPlayerId}
