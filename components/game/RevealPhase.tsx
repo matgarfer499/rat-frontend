@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
-import { RefreshIcon, HomeIcon, UserIcon, DetectiveIcon, JokerIcon, MaskIcon } from '@components/icons';
+import { RefreshIcon, HomeIcon, MaskIcon } from '@components/icons';
 import { Player } from '@lib/types';
 import { ActionButton } from '@components/ui/ActionButton';
+import { PlayerRoleCard } from './PlayerRoleCard';
 
 interface RevealPhaseProps {
   players: Player[];
@@ -75,25 +76,11 @@ export function RevealPhase({
     return dict.civilian;
   };
 
-  const getRoleBgClass = (playerId: string) => {
-    if (playerId === impostorId) return 'bg-red-500/10 border-red-500/20';
-    if (playerId === detectiveId) return 'bg-blue-500/10 border-blue-500/20';
-    if (playerId === jokerId) return 'bg-orange-500/10 border-orange-500/20';
-    return 'bg-primary/10 border-primary/20';
-  };
-
-  const getRoleTextClass = (playerId: string) => {
-    if (playerId === impostorId) return 'text-red-500';
-    if (playerId === detectiveId) return 'text-blue-500';
-    if (playerId === jokerId) return 'text-orange-500';
-    return 'text-secondary';
-  };
-
-  const getRoleIcon = (playerId: string) => {
-    if (playerId === impostorId) return MaskIcon;
-    if (playerId === detectiveId) return DetectiveIcon;
-    if (playerId === jokerId) return JokerIcon;
-    return UserIcon;
+  const getPlayerRole = (playerId: string): 'civilian' | 'impostor' | 'detective' | 'joker' => {
+    if (playerId === impostorId) return 'impostor';
+    if (playerId === detectiveId) return 'detective';
+    if (playerId === jokerId) return 'joker';
+    return 'civilian';
   };
 
   return (
@@ -155,38 +142,22 @@ export function RevealPhase({
         </h3>
 
         {/* Player List */}
-        <div className="flex flex-col gap-3 px-4">
-          {players.map((player) => {
-            const RoleIcon = getRoleIcon(player.id);
-            const roleLabel = getRoleLabel(player.id);
-            const roleBgClass = getRoleBgClass(player.id);
-            const roleTextClass = getRoleTextClass(player.id);
-            
-            return (
-              <div
-                key={player.id}
-                className="flex items-center justify-between p-3 rounded-lg 
-                          bg-white dark:bg-[#1a2332] border dark:border-[#314368]/50 shadow-sm"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="size-12 rounded-full bg-gradient-to-br from-primary/20 to-blue-400/20 
-                                 flex items-center justify-center border-2 border-primary/20">
-                    <RoleIcon size={24} className={roleTextClass} />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-white font-bold text-base">
-                      {player.name}
-                    </span>
-                  </div>
-                </div>
-                <div className={`px-3 py-1 rounded-full border ${roleBgClass}`}>
-                  <span className={`${roleTextClass} text-xs font-bold uppercase tracking-wide`}>
-                    {roleLabel}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+        <div className="flex flex-col gap-2 px-4">
+          {players.map((player) => (
+            <PlayerRoleCard
+              key={player.id}
+              username={player.name}
+              role={getPlayerRole(player.id)}
+              wasVoted={player.id === votedPlayerId}
+              roleLabels={{
+                civilian: dict.civilian,
+                impostor: dict.impostor,
+                detective: dict.detective,
+                joker: dict.joker,
+              }}
+              votedLabel={dict.correctVote || 'Voted'}
+            />
+          ))}
         </div>
       </div>
 
