@@ -1,36 +1,125 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RAT
+
+Frontend for the RAT multiplayer word game. Built with Next.js, React, and Socket.IO.
+
+## Overview
+
+RAT is a social deduction game where players receive a secret word from a category. One player (the impostor) doesn't know the word and must blend in during discussions. Players vote to identify the impostor.
+
+### Game Modes
+
+- **Single Player**: A mode to play locally on a single device.
+- **Multiplayer**: Real-time online rooms to play with friends.
+
+### Features
+
+- Real-time multiplayer with WebSocket
+- Internationalization (Spanish and English)
+- Responsive design for mobile and desktop
+- Room creation with customizable settings
+- Public room browser with search
+
+## Tech Stack
+
+- **Next.js 16** - React framework with App Router
+- **React 19** - UI library
+- **TypeScript** - Type safety
+- **Tailwind CSS 4** - Styling
+- **Socket.IO Client** - Real-time communication
+- **Framer Motion** - Animations
+
+## Requirements
+
+- Node.js 18+
+- pnpm (recommended)
+- [RAT API](https://github.com/matgarfer499/rat-api) running locally
 
 ## Getting Started
 
-First, run the development server:
+1. Install dependencies:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Set up environment variables:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cp .env.example .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Run the development server:
 
-## Learn More
+```bash
+pnpm dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+4. Open http://localhost:3000 in your browser.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+app/
+  globals.css           # Global styles
+  [lang]/               # i18n route segment
+    layout.tsx          # Root layout
+    page.tsx            # Home page
+    categories/         # Category selection
+    setup/              # Game setup (single player)
+    play/               # Single player game
+    reveal/             # Single player reveal
+    multiplayer/        # Multiplayer routes
+      page.tsx          # Multiplayer lobby
+      create/           # Create room
+      join/             # Join room
+      room/[id]/        # Game room
 
-## Deploy on Vercel
+components/
+  game/                 # Game UI components
+  icons/                # Icon components
+  layout/               # Layout components (Header)
+  multiplayer/          # Multiplayer-specific components
+  ui/                   # Reusable UI components
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+hooks/
+  use-countdown.ts      # Countdown timer hook
+  use-dictionary.ts     # i18n dictionary hook
+  use-socket.ts         # Socket.IO client hook
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+i18n/
+  config.ts             # i18n configuration
+  get-dictionary.ts     # Dictionary loader
+  dictionaries/         # Translation files
+
+lib/
+  api.ts                # API client utilities
+  fetch-helper.ts       # Fetch wrapper
+  game-utils.ts         # Game logic utilities
+  rooms-api.ts          # Room API client
+  types.ts              # Shared types
+```
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | Backend API URL |
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start development server |
+| `pnpm build` | Build for production |
+| `pnpm start` | Start production server |
+| `pnpm lint` | Run ESLint |
+| `pnpm knip` | Find unused code |
+
+## Internationalization
+
+The app supports multiple languages through URL-based routing:
+
+- `/es` - Spanish (default)
+- `/en` - English
+
+Translations are stored in `i18n/dictionaries/` as JSON files.
