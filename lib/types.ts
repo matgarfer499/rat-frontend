@@ -48,10 +48,3 @@ export interface GameRoles {
   detectiveEnabled: boolean;
   jokerEnabled: boolean;
 }
-
-export interface GameConfig {
-  language: string;
-  players: Player[];
-  selectedCategories: number[];
-  roles?: GameRoles;
-}
