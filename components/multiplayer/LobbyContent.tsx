@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PlayerCard } from '@components/multiplayer/PlayerCard';
+import { LobbyActions } from '@components/multiplayer/LobbyActions';
 import { CollapsibleSection } from '@components/ui/CollapsibleSection';
 import { RangeSlider } from '@components/ui/RangeSlider';
 import { ToggleCard } from '@components/ui/ToggleCard';
@@ -16,7 +17,6 @@ import {
   FolderIcon,
   DetectiveIcon,
   JokerIcon,
-  PlayIcon,
   CheckIcon,
   RandomIcon,
 } from '@components/icons';
@@ -414,34 +414,15 @@ export function LobbyContent({
 
       {/* Sticky Bottom Action */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background-light via-background-light to-transparent dark:from-background-dark dark:via-background-dark pt-12 z-10">
-        {isHost ? (
-          <>
-            <ActionButton
-              onClick={onStartGame}
-              variant="primary"
-              icon={<PlayIcon size={20} />}
-              className={!allPlayersReady || selectedCategories.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}
-            >
-              {dict?.multiplayer?.startGame || 'LAUNCH MISSION'}
-            </ActionButton>
-            <p className="text-center text-[10px] text-gray-400 mt-2 font-medium">
-              {!allPlayersReady 
-                ? (dict?.multiplayer?.waitingAllReady || 'Waiting for all players to be ready...')
-                : selectedCategories.length === 0
-                  ? (dict?.categories?.selectAtLeastOne || 'Select at least one category')
-                  : (dict?.multiplayer?.readyToStart || 'Ready to start!')
-              }
-            </p>
-          </>
-        ) : (
-          <ActionButton
-            onClick={onToggleReady}
-            variant="primary"
-            icon={<CheckIcon size={20} />}
-          >
-            {dict?.multiplayer?.ready || 'READY'}
-          </ActionButton>
-        )}
+        <LobbyActions
+          isHost={isHost}
+          isReady={room.players[currentPlayerId]?.is_ready ?? false}
+          allPlayersReady={allPlayersReady}
+          hasCategories={selectedCategories.length > 0}
+          onToggleReady={onToggleReady}
+          onStartGame={onStartGame}
+          dict={dict}
+        />
       </div>
     </motion.div>
   );
