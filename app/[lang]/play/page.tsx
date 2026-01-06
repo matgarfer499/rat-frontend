@@ -152,7 +152,6 @@ export default function PlayPage() {
               {/* Player Card */}
               <PlayerCard
                 playerName={players[startingPlayerIndex]?.name}
-                activeTurnLabel={dict.play.activeTurn || 'Turno activo'}
               />
             </motion.div>
           )}
@@ -165,7 +164,7 @@ export default function PlayPage() {
               onConfirmVote={handleConfirmVote}
               dict={{
                 votingInProgress: dict.play.votingInProgress || 'Votación en curso',
-                whoIsMrWhite: dict.play.whoIsMrWhite || '¿Quién es El Señor Blanco?',
+                whoIsMrWhite: dict.play.whoIsImpostor,
                 votingInstructions: dict.play.votingInstructions || 'Analiza el comportamiento y vota para eliminar al sospechoso.',
                 timeRemaining: dict.play.timeRemaining || 'Tiempo restante',
                 skipVote: dict.play.skipVote || 'Saltar Voto',
@@ -204,7 +203,6 @@ export default function PlayPage() {
                 impostor: dict.play.impostor,
                 detective: dict.play.detective,
                 joker: dict.play.joker,
-                correctVote: dict.play.correctVote || 'Voto Correcto',
                 captured: dict.play.captured || 'Capturado',
                 survivor: dict.play.survivor || 'Sobreviviente',
                 eliminated: dict.play.eliminated || 'Eliminado',

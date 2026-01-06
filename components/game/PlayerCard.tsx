@@ -2,10 +2,9 @@ import { UserIcon, PlayIcon } from '@components/icons';
 
 interface PlayerCardProps {
   playerName: string;
-  activeTurnLabel: string;
 }
 
-export function PlayerCard({ playerName, activeTurnLabel }: PlayerCardProps) {
+export function PlayerCard({ playerName }: PlayerCardProps) {
   return (
     <div className="flex w-full flex-col gap-6 items-center">
       <div className="relative group">
@@ -36,13 +35,6 @@ export function PlayerCard({ playerName, activeTurnLabel }: PlayerCardProps) {
                       text-center uppercase">
           {playerName}
         </p>
-        <div className="flex items-center gap-2 mt-2 px-3 py-1 rounded-full 
-                        bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/5">
-          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <p className="text-gray-600 dark:text-gray-300 text-sm font-medium leading-normal text-center">
-            {activeTurnLabel}
-          </p>
-        </div>
       </div>
     </div>
   );

@@ -48,7 +48,7 @@ export default function Home() {
         {/* Title section */}
         <div className="flex flex-col items-center gap-2 mb-8 px-6 text-center">
           <h1 className="text-white text-5xl md:text-6xl font-black tracking-tight leading-none drop-shadow-lg italic">
-            R.A.T.
+            {dict.lobby.title}
           </h1>
           <p className="text-white/90 text-lg font-bold tracking-widest uppercase">
             {dict.lobby.subtitle}

@@ -199,7 +199,7 @@ export default function RevealPage() {
           <ArrowLeftIcon size={24} />
         </button>
         <div className="flex flex-col items-center flex-1">
-          <h2 className="text-white text-lg font-black tracking-wider uppercase">R.A.T.</h2>
+          <h2 className="text-white text-lg font-black tracking-wider uppercase">{dict.lobby.title}</h2>
           <span className="text-[10px] text-white/50 tracking-[0.2em] font-medium uppercase">
             Recognize A Traitor
           </span>
@@ -213,7 +213,7 @@ export default function RevealPage() {
         <div className="flex w-full flex-col gap-4 items-center pt-4">
           <div className="flex flex-col items-center justify-center gap-1">
             <h3 className="text-white text-2xl font-bold leading-tight tracking-tight text-center">
-              Turno de {currentPlayer.name}
+              {dict.reveal.currentPlayerSuffix.replace('{currentPlayer.name}', currentPlayer.name)}
             </h3>
             <PlayerBadge 
               playerNumber={currentPlayerIndex + 1}
@@ -251,7 +251,7 @@ export default function RevealPage() {
         {/* Bottom Section - Always visible */}
         <div className="w-full flex flex-col gap-5">
           <p className="text-[#90a4cb] text-sm font-normal leading-relaxed text-center px-4">
-            Memoriza tu palabra. Al soltar la tarjeta, la información se ocultará de nuevo automáticamente por seguridad.
+            {dict.reveal.cardHint}
           </p>
           <ActionButton
             onClick={handleNext}

@@ -29,7 +29,6 @@ interface RevealPhaseProps {
     impostor: string;
     detective?: string;
     joker?: string;
-    correctVote: string;
     captured: string;
     survivor: string;
     eliminated: string;
@@ -148,7 +147,6 @@ export function RevealPhase({
                 detective: dict.detective,
                 joker: dict.joker,
               }}
-              votedLabel={dict.correctVote || 'Voted'}
             />
           ))}
         </div>

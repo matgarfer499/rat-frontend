@@ -128,7 +128,7 @@ export default function CategoriesPage() {
           onClick={handleBack}
           className="px-6 py-3 bg-primary hover:bg-blue-600 text-white rounded-full font-bold transition-all active:scale-95"
         >
-          {dict.common.back}
+          {dict.setup.back}
         </button>
       </div>
     );
